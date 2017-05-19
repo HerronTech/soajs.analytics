@@ -869,7 +869,8 @@ const lib = {
 			deployment: deployment
 		};
 		let flk = ["kibana", "logstash", env.code.toLowerCase() + '-' + "filebeat", "soajs-metricbeat"];
-		function check (cb){
+		
+		function check(cb) {
 			deployer.listServices(options, function (err, servicesList) {
 				if (err) {
 					return cb(err);
@@ -891,7 +892,7 @@ const lib = {
 				if (failed.length !== 0) {
 					console.log(failed);
 					setTimeout(function () {
-						 check(cb);
+						check(cb);
 					}, 1000);
 				}
 				else {
@@ -899,6 +900,7 @@ const lib = {
 				}
 			});
 		}
+		
 		return check(cb);
 	},
 	
@@ -927,28 +929,71 @@ const lib = {
 			conditions: {"_type": "settings"}
 		};
 		let options = {
-			method: 'GET',
-			url: 'http://127.0.0.1:32601/status'
+			method: 'GET'
 		};
-		if (deployment.external){
-			options.url = 'http://' + process.env.CONTAINER_HOST + ':32601/status'
-		}
-		else {
-			//todo in dashboard
-		}
-		//added check for availability of kibana
-		request(options, function (error, response) {
-			if (error || !response) {
-				setTimeout(function () {
-					lib.setDefaultIndex(soajs, deployment, esClient, env, model, cb);
-				}, 3000);
+		
+		function getKibanUrl(cb) {
+			let url;
+			if (deployment.external) {
+				url = 'http://' + process.env.CONTAINER_HOST + ':32601/status';
+				return cb(null, url)
 			}
 			else {
-				esClient.db.search(condition, function (err, res) {
+				deployer.listServices(options, function (err, servicesList) {
 					if (err) {
 						return cb(err);
 					}
-					if (res && res.hits && res.hits.hits && res.hits.hits.length > 0) {
+					servicesList.forEach(function (oneService) {
+						if (oneService.labels["soajs.service.name"] === "kibana") {
+							url = 'http://' + oneService.name + ':5601/status';
+						}
+					});
+					return cb(null, url);
+				});
+			}
+		}
+		
+		//added check for availability of kibana
+		function kibanaStatus(cb) {
+			request(options, function (error, response) {
+				if (error || !response) {
+					setTimeout(function () {
+						kibanaStatus(cb);
+					}, 3000);
+				}
+				else {
+					return cb(null, true);
+				}
+			});
+		}
+		
+		function kibanaIndex(cb) {
+			esClient.db.search(condition, function (err, res) {
+				if (err) {
+					return cb(err);
+				}
+				if (res && res.hits && res.hits.hits && res.hits.hits.length > 0) {
+					return cb(null, true);
+				}
+				else {
+					setTimeout(function () {
+						kibanaIndex(cb);
+					}, 500);
+				}
+			});
+		}
+		
+		getKibanUrl(function (err, url) {
+			if (err) {
+				cb(err);
+			}
+			else {
+				options.url = url;
+				kibanaStatus(function () {
+					kibanaIndex(function (error) {
+						if(error){
+							return cb(error);
+						}
 						model.findEntry(soajs, combo, function (err, result) {
 							if (err) {
 								return cb(err);
@@ -981,15 +1026,14 @@ const lib = {
 								}
 							}, cb)
 						});
-					}
-					else {
-						setTimeout(function () {
-							lib.setDefaultIndex(soajs, deployment, env, esClient, model, cb);
-						}, 500);
-					}
+					});
 				});
 			}
 		});
+		
+		
+		
+		
 	}
 };
 
