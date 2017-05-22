@@ -934,7 +934,7 @@ const lib = {
 		
 		function getKibanUrl(cb) {
 			let url;
-			if (deployment.external) {
+			if (deployment && deployment.external) {
 				url = 'http://' + process.env.CONTAINER_HOST + ':32601/status';
 				return cb(null, url)
 			}

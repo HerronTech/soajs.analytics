@@ -9,6 +9,9 @@ module.exports = {
 		if (!opts.model){
 			opts.model = model;
 		}
+		if (!opts.deployment){
+			opts.deployment= {};
+		}
 		script.initialize(opts, function (err) {
 			if (cb && typeof cb === "function") {
 				if (err) {
