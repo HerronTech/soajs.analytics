@@ -939,6 +939,7 @@ const lib = {
 				return cb(null, url)
 			}
 			else {
+				let options = utils.buildDeployerOptions(env, soajs, model);
 				deployer.listServices(options, function (err, servicesList) {
 					if (err) {
 						return cb(err);
