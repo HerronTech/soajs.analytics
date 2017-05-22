@@ -974,7 +974,7 @@ const lib = {
 					return cb(err);
 				}
 				if (res && res.hits && res.hits.hits && res.hits.hits.length > 0) {
-					return cb(null, true);
+					return cb(null, res);
 				}
 				else {
 					setTimeout(function () {
@@ -991,7 +991,7 @@ const lib = {
 			else {
 				options.url = url;
 				kibanaStatus(function () {
-					kibanaIndex(function (error) {
+					kibanaIndex(function (error, kibanaRes) {
 						if(error){
 							return cb(error);
 						}
@@ -999,7 +999,7 @@ const lib = {
 							if (err) {
 								return cb(err);
 							}
-							index.id = res.hits.hits[0]._id;
+							index.id = kibanaRes.hits.hits[0]._id;
 							async.parallel({
 								"updateES": function (call) {
 									esClient.db.update(index, call);
