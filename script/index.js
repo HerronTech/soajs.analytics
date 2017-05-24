@@ -16,7 +16,7 @@ const script = {
 		
 		let operations = [];
 		operations.push(async.apply(step.insertMongoData, opts.soajs, opts.model));
-		operations.push(async.apply(step.deployElastic, opts.soajs, opts.deployment, opts.envRecord, opts.mode, opts.es_external));
+		operations.push(async.apply(step.deployElastic, opts.soajs, opts.deployment, opts.envRecord, opts.model));
 		operations.push(async.apply(step.checkElasticSearch, opts.esClient));
 		operations.push(async.apply(step.getElasticClientNode, opts.esClient));
 		operations.push(async.apply(step.setMapping, opts.soajs, opts.model, opts.esClient));
