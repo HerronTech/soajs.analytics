@@ -97,9 +97,10 @@ const lib = {
 	 * @param {string} service: elk file name
 	 * @param {object} deployment: deployment object
 	 * @param {object} env: environment object
+	 * @param {object} settings: analytics settings record
 	 * @param {function} cb: callback function
 	 */
-	"getAnalyticsContent": function (service, deployment, env, cb) {
+	"getAnalyticsContent": function (service, deployment, env, settings, cb) {
 		let path = __dirname + "/../data/services/elk/";
 		fs.exists(path, function (exists) {
 			if (!exists) {
@@ -159,6 +160,7 @@ const lib = {
 				else if (serviceParams.replication.mode === "global") {
 					serviceParams.replication.mode = "daemonset";
 				}
+				4
 				esNameSpace = '-service.' + env.deployer.container["kubernetes"][env.deployer.selected.split('.')[2]].namespace.default;
 				logNameSpace = '-service.' + env.deployer.container["kubernetes"][env.deployer.selected.split('.')[2]].namespace.default;
 				
@@ -242,7 +244,7 @@ const lib = {
 				return cb(null, true)
 			}
 			else {
-				lib.getAnalyticsContent("elastic", deployment, env, function (err, content) {
+				lib.getAnalyticsContent("elastic", deployment, env, settings, function (err, content) {
 					if (err) {
 						return cb(err);
 					}
@@ -311,10 +313,28 @@ const lib = {
 	 * @param {object} soajs: soajs object in req
 	 * @param {function} cb: callback function
 	 */
-	"checkElasticSearch": function (esClient, cb) {
+	"checkElasticSearch": function (esClient, settings, cb) {
 		console.log("Checking ElasticSearch Availablity...")
 		lib.pingElastic(esClient, cb);
 		//add version to settings record
+	},
+	
+	
+	/**
+	 * check elasticsearch overall availability
+	 * @param {object} esClient: cluster info
+	 * @param {function} cb: callback function
+	 */
+	"getElasticClientNode": function (esClient, cb) {
+		console.log("Get Elasticsearch Client node...")
+		esClient.node.info({}, function (err, res) {
+			console.log("-------err--------")
+			console.log(JSON.stringify(err, null, 2));
+			console.log("-------res--------")
+			console.log(JSON.stringify(res, null, 2));
+			process.exit(-1);
+			return cb(null, true);
+		});
 	},
 	
 	/**
@@ -675,7 +695,7 @@ const lib = {
 			}
 			else {
 				console.log("Deploying Kibana..");
-				lib.getAnalyticsContent("kibana", deployment, env, function (err, content) {
+				lib.getAnalyticsContent("kibana", deployment, env, settings, function (err, content) {
 					if (err) {
 						return cb(err);
 					}
@@ -723,7 +743,7 @@ const lib = {
 				return cb(null, true);
 			}
 			else {
-				lib.getAnalyticsContent("logstash", deployment, env, function (err, content) {
+				lib.getAnalyticsContent("logstash", deployment, env, settings, function (err, content) {
 					if (err) {
 						return cb(err);
 					}
@@ -775,7 +795,7 @@ const lib = {
 				return cb(null, true);
 			}
 			else {
-				lib.getAnalyticsContent("filebeat", deployment, env, function (err, content) {
+				lib.getAnalyticsContent("filebeat", deployment, env, settings, function (err, content) {
 					if (err) {
 						return cb(err);
 					}
@@ -827,7 +847,7 @@ const lib = {
 				return cb(null, true);
 			}
 			else {
-				lib.getAnalyticsContent("metricbeat", deployment, env, function (err, content) {
+				lib.getAnalyticsContent("metricbeat", deployment, env, settings, function (err, content) {
 					if (err) {
 						return cb(err);
 					}
@@ -992,7 +1012,7 @@ const lib = {
 				options.url = url;
 				kibanaStatus(function () {
 					kibanaIndex(function (error, kibanaRes) {
-						if(error){
+						if (error) {
 							return cb(error);
 						}
 						model.findEntry(soajs, combo, function (err, result) {
@@ -1031,8 +1051,6 @@ const lib = {
 				});
 			}
 		});
-		
-		
 		
 		
 	}

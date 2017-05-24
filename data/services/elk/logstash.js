@@ -3,7 +3,8 @@ module.exports = {
 	"env": "%env%",
 	"name": "%env%-logstash",
 	"variables": [
-		'ELASTICSEARCH_URL=soajs-analytics-elasticsearch%esNameSpace%:9200'
+		//'ELASTICSEARCH_URL=soajs-analytics-elasticsearch%esNameSpace%:9200'
+		'ELASTICSEARCH_URL=%ELASTICSEARCH_URL%'
 	],
 	"labels": {
 		"soajs.content": "true",

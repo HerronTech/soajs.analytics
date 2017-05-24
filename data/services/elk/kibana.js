@@ -3,7 +3,8 @@ module.exports = {
 	"env": "dashboard", //it's only used to get the deployer cluster
 	"name": "kibana",
 	"variables": [
-		'ELASTICSEARCH_URL=http://soajs-analytics-elasticsearch%esNameSpace%:9200' //add support for kubernetes (add namespace)
+		//'ELASTICSEARCH_URL=http://soajs-analytics-elasticsearch%esNameSpace%:9200' //add support for kubernetes (add namespace)
+		'ELASTICSEARCH_URL=%ELASTICSEARCH_URL%' //add support for kubernetes (add namespace)
 	],
 	"labels": {
 		"soajs.content": "true",

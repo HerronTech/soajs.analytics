@@ -29,6 +29,21 @@ const utils = {
 		if (options.strategy === 'docker') options.strategy = 'swarm';
 		
 		return options;
+	},
+	
+	"getActivatedEnv": function (settings, currentEnv) {
+		var activated = false;
+		if (settings && settings.env) {
+			var environments = Object.keys(settings.env);
+			environments.forEach(function (oneEnv) {
+				if (oneEnv !== currentEnv) {
+					if (settings.env[oneEnv]) {
+						activated = true;
+					}
+				}
+			});
+		}
+		return activated;
 	}
 };
 
