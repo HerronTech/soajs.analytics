@@ -109,7 +109,7 @@ const script = {
 			deployLogstash: ['deployKibana', async.apply(step.deployLogstash, opts.soajs, opts.config, opts.catalogDeployment, opts.deployment, opts.envRecord, opts.model, opts.esCluster)],
 			deployFilebeat: ['deployLogstash', async.apply(step.deployFilebeat, opts.soajs, opts.config, opts.deployment, opts.envRecord, opts.model)],
 			deployMetricbeat: ['deployFilebeat', async.apply(step.deployMetricbeat, opts.soajs, opts.config, opts.catalogDeployment, opts.deployment, opts.envRecord, opts.model, opts.esCluster)],
-			checkAvailability: ['deployMetricbeat', async.apply(step.checkAvailability, opts.soajs, opts.config, opts.deployment, opts.envRecord, opts.model)],
+			checkAvailability: ['deployMetricbeat', async.apply(step.checkAvailability, opts.soajs, opts.deployment, opts.envRecord, opts.model)],
 			setDefaultIndex: ['checkAvailability', async.apply(step.setDefaultIndex, opts.soajs, opts.deployment, opts.esClient, opts.envRecord, opts.model)],
 		 };
 		

@@ -214,14 +214,14 @@ const lib = {
 				}
 				//add support for multiple elasticsearch hosts;
 				if (service === "logstash" || service === "metricbeat") {
-					serviceParams.push({
-						"SOAJS_ANALYTICS_ES_NB": esCluster.servers.length
-					});
+					serviceParams.variables.push(
+						"SOAJS_ANALYTICS_ES_NB" + ":" +  esCluster.servers.length
+					);
 					let counter = 1;
 					esCluster.servers.forEach(function (server) {
-						let obj = {};
-						obj["SOAJS_ANALYTICS_ES_IP_" + counter] = server.host;
-						obj["SOAJS_ANALYTICS_ES_PORT_" + counter] = server.port;
+						serviceParams.variables.push("SOAJS_ANALYTICS_ES_IP_" + counter + ":" + server.host);
+						serviceParams.variables.push("SOAJS_ANALYTICS_ES_PORT_" + counter + ":" + server.port);
+						counter++;
 					});
 				}
 				serviceParams = JSON.stringify(serviceParams);
@@ -233,9 +233,9 @@ const lib = {
 				if (service === "filebeat") {
 					serviceParams = serviceParams.replace(/%logNameSpace%/g, logNameSpace);
 				}
-				if (service === "logstash" || service === "metricbeat") {
-					serviceParams = serviceParams.replace(/%elasticsearch_url%/g, auto.getElasticClientNode);
-				}
+				// if (service === "logstash" || service === "metricbeat") {
+				// 	serviceParams = serviceParams.replace(/%elasticsearch_url%/g, auto.getElasticClientNode);
+				// }
 				serviceParams = serviceParams.replace(/%env%/g, env.code.toLowerCase());
 				serviceParams = JSON.parse(serviceParams);
 				serviceParams.deployment = deployment;
@@ -247,7 +247,7 @@ const lib = {
 			//incase of kibana add the url
 			//call mongo and get the recipe id
 			if (service === "metricbeat" || service === "logstash" || service === "kibana") {
-				fillCatalogOpts (soajs, function(err){
+				fillCatalogOpts (soajs, model, function(err){
 					catalogDeployment.deployService(config, soajs, soajs.registry, {}, function (error, data) {
 						if(err){
 							return cb(err);
@@ -265,7 +265,7 @@ const lib = {
 			}
 		}
 		
-		function fillCatalogOpts(soajs, call) {
+		function fillCatalogOpts(soajs, model, call) {
 			let combo = {};
 			combo.collection = collection.catalogs;
 			combo.conditions = {
@@ -273,8 +273,7 @@ const lib = {
 			};
 			soajs.inputmaskData = {
 				action: "analytics",
-				env: env.code.toLowerCase(),
-				recipe: '592d78e7233334743e066d2c'
+				env: env.code.toLowerCase()
 			};
 			switch (service) {
 				case 'logstash':
@@ -325,10 +324,11 @@ const lib = {
 					return call(err);
 				}
 				if (!recipe) {
-					return cb("No Recipe found for " + service);
+					return call("No Recipe found for " + service);
 				}
 				else {
 					soajs.inputmaskData.recipe = recipe._id.toString();
+					return call(null, true);
 				}
 			});
 		}
@@ -1083,7 +1083,7 @@ const lib = {
 				return cb(null, true);
 			}
 			else {
-				lib.getAnalyticsContent(soajs, config, "metricbeat", catalogDeployment, deployment, env, settings, auto, esCluster, function (err, content) {
+				lib.getAnalyticsContent(soajs, config, model, "metricbeat", catalogDeployment, deployment, env, settings, auto, esCluster, function (err, content) {
 					if (err) {
 						return cb(err);
 					}
