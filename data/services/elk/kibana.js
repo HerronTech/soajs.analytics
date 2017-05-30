@@ -4,7 +4,7 @@ module.exports = {
 	"name": "kibana",
 	"variables": [
 		//'ELASTICSEARCH_URL=http://soajs-analytics-elasticsearch%esNameSpace%:9200' //add support for kubernetes (add namespace)
-		'ELASTICSEARCH_URL=%ELASTICSEARCH_URL%' //add support for kubernetes (add namespace)
+		'ELASTICSEARCH_URL=%elasticsearch_url%' //add support for kubernetes (add namespace)
 	],
 	"labels": {
 		"soajs.content": "true",

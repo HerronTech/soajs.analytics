@@ -7,11 +7,13 @@ const request = require("request");
 const deployer = require('soajs.core.drivers');
 const utils = require('../utils/utils');
 const collection = {
-	analytics: 'analytics'
+	analytics: 'analytics',
+	catalogs: 'catalogs'
 };
 const uuid = require('uuid');
 const filebeatIndex = require("../data/indexes/filebeat-index");
 const metricbeatIndex = require("../data/indexes/metricbeat-index");
+
 let counter = 0;
 const lib = {
 	/**
@@ -94,182 +96,355 @@ const lib = {
 	
 	/**
 	 * create deployment object
+	 * @param {string} soajs: req.soajs object
+	 * @param {string} config: configuration object
+	 * @param {string} model: mongo object
 	 * @param {string} service: elk file name
-	 * @param {object} deployment: deployment object
+	 * @param {object} catalogDeployment: catalog deployment object
+	 * @param {object} deployment: installer deployment object
 	 * @param {object} env: environment object
 	 * @param {object} settings: analytics settings record
+	 * @param {object} auto: object containing tasks done
+	 * @param {object} esCluster: elasticsearch cluster
 	 * @param {function} cb: callback function
 	 */
-	"getAnalyticsContent": function (service, deployment, env, settings, cb) {
-		let path = __dirname + "/../data/services/elk/";
-		fs.exists(path, function (exists) {
-			if (!exists) {
-				return cb('Folder [' + path + '] does not exist');
+	"getAnalyticsContent": function (soajs, config, model, service, catalogDeployment, deployment, env, settings, auto, esCluster, cb) {
+		if (service === "elastic" || service === "filebeat" || deployment && deployment.external) {
+			let path = __dirname + "/../data/services/elk/";
+			fs.exists(path, function (exists) {
+				if (!exists) {
+					return cb('Folder [' + path + '] does not exist');
+				}
+				let loadContent;
+				try {
+					loadContent = require(path + service);
+				}
+				catch (e) {
+					return cb(e);
+				}
+				let serviceParams = {
+					"env": loadContent.env,
+					"name": loadContent.name,
+					"image": loadContent.deployConfig.image,
+					"imagePullPolicy": "IfNotPresent",
+					"variables": loadContent.variables || [],
+					"labels": loadContent.labels,
+					"memoryLimit": loadContent.deployConfig.memoryLimit,
+					"replication": {
+						"mode": loadContent.deployConfig.replication.mode,
+						"replicas": loadContent.deployConfig.replication.replicas
+					},
+					"containerDir": loadContent.deployConfig.workDir,
+					"restartPolicy": {
+						"condition": loadContent.deployConfig.restartPolicy.condition,
+						"maxAttempts": loadContent.deployConfig.restartPolicy.maxAttempts
+					},
+					"network": loadContent.deployConfig.network,
+					"ports": loadContent.deployConfig.ports || []
+				};
+				
+				if (loadContent.command && loadContent.command.cmd) {
+					serviceParams.command = loadContent.command.cmd;
+				}
+				if (loadContent.command && loadContent.command.args) {
+					serviceParams.args = loadContent.command.args;
+				}
+				//if deployment is kubernetes
+				let esNameSpace = '';
+				let logNameSpace = '';
+				if (env.deployer.selected.split(".")[1] === "kubernetes") {
+					//"soajs.service.mode": "deployment"
+					if (serviceParams.labels["soajs.service.mode"] === "replicated") {
+						serviceParams.labels["soajs.service.mode"] = "deployment";
+					}
+					else {
+						serviceParams.labels["soajs.service.mode"] = "daemonset";
+					}
+					if (serviceParams.memoryLimit) {
+						delete serviceParams.memoryLimit;
+					}
+					if (serviceParams.replication.mode === "replicated") {
+						serviceParams.replication.mode = "deployment";
+					}
+					else if (serviceParams.replication.mode === "global") {
+						serviceParams.replication.mode = "daemonset";
+					}
+					esNameSpace = '-service.' + env.deployer.container["kubernetes"][env.deployer.selected.split('.')[2]].namespace.default;
+					logNameSpace = '-service.' + env.deployer.container["kubernetes"][env.deployer.selected.split('.')[2]].namespace.default;
+					
+					if (env.deployer.container["kubernetes"][env.deployer.selected.split('.')[2]].namespace.perService) {
+						esNameSpace += '-soajs-analytics-elasticsearch-service';
+						logNameSpace += '-' + env.code.toLowerCase() + '-logstash-service';
+					}
+					//change published port name
+					if (service === "elastic") {
+						serviceParams.ports[0].published = 30920;
+					}
+				}
+				if (loadContent.deployConfig.volume) {
+					if (env.deployer.selected.split(".")[1] === "kubernetes") {
+						serviceParams.voluming = {
+							"volumes": [],
+							"volumeMounts": []
+						};
+						loadContent.deployConfig.volume.forEach(function (oneVolume) {
+							serviceParams.voluming.volumes.push({
+								"name": oneVolume.Source,
+								"hostPath": {
+									"path": oneVolume.Target
+								}
+							});
+							serviceParams.voluming.volumeMounts.push({
+								"name": oneVolume.Source,
+								"mountPath": oneVolume.Target
+							});
+						})
+					}
+					else if (env.deployer.selected.split(".")[1] === "docker") {
+						if (service === "metricbeat") {
+							loadContent.deployConfig.volume[0].Source = loadContent.deployConfig.volume[0].Target;
+						}
+						serviceParams.voluming = {
+							"volumes": loadContent.deployConfig.volume
+						};
+					}
+				}
+				if (loadContent.deployConfig.annotations) {
+					serviceParams.annotations = loadContent.deployConfig.annotations;
+				}
+				//add support for multiple elasticsearch hosts;
+				if (service === "logstash" || service === "metricbeat") {
+					serviceParams.push({
+						"SOAJS_ANALYTICS_ES_NB": esCluster.servers.length
+					});
+					let counter = 1;
+					esCluster.servers.forEach(function (server) {
+						let obj = {};
+						obj["SOAJS_ANALYTICS_ES_IP_" + counter] = server.host;
+						obj["SOAJS_ANALYTICS_ES_PORT_" + counter] = server.port;
+					});
+				}
+				serviceParams = JSON.stringify(serviceParams);
+				//add namespace
+				
+				if (service === "kibana") {
+					serviceParams = serviceParams.replace(/%elasticsearch_url%/g, 'http://' + auto.getElasticClientNode);
+				}
+				if (service === "filebeat") {
+					serviceParams = serviceParams.replace(/%logNameSpace%/g, logNameSpace);
+				}
+				if (service === "logstash" || service === "metricbeat") {
+					serviceParams = serviceParams.replace(/%elasticsearch_url%/g, auto.getElasticClientNode);
+				}
+				serviceParams = serviceParams.replace(/%env%/g, env.code.toLowerCase());
+				serviceParams = JSON.parse(serviceParams);
+				serviceParams.deployment = deployment;
+				return cb(null, serviceParams);
+				
+			});
+		}
+		else {
+			//incase of kibana add the url
+			//call mongo and get the recipe id
+			if (service === "metricbeat" || service === "logstash" || service === "kibana") {
+				fillCatalogOpts (soajs, function(err){
+					catalogDeployment.deployService(config, soajs, soajs.registry, {}, function (error, data) {
+						if(err){
+							return cb(err);
+						}
+						console.log("????????")
+						console.log(JSON.stringify(data, null, 2))
+						console.log("????error????")
+						console.log(JSON.stringify(error, null, 2))
+						return cb(null, data);
+					});
+				});
 			}
-			let loadContent;
-			try {
-				loadContent = require(path + service);
+			else {
+				return cb("invalid service name");
 			}
-			catch (e) {
-				return cb(e);
-			}
-			let serviceParams = {
-				"env": loadContent.env,
-				"name": loadContent.name,
-				"image": loadContent.deployConfig.image,
-				"imagePullPolicy": "IfNotPresent",
-				"variables": loadContent.variables || [],
-				"labels": loadContent.labels,
-				"memoryLimit": loadContent.deployConfig.memoryLimit,
-				"replication": {
-					"mode": loadContent.deployConfig.replication.mode,
-					"replicas": loadContent.deployConfig.replication.replicas
-				},
-				"containerDir": loadContent.deployConfig.workDir,
-				"restartPolicy": {
-					"condition": loadContent.deployConfig.restartPolicy.condition,
-					"maxAttempts": loadContent.deployConfig.restartPolicy.maxAttempts
-				},
-				"network": loadContent.deployConfig.network,
-				"ports": loadContent.deployConfig.ports || []
+		}
+		
+		function fillCatalogOpts(soajs, call) {
+			let combo = {};
+			combo.collection = collection.catalogs;
+			combo.conditions = {
+				"_type": "elk"
 			};
-			
-			if (loadContent.command && loadContent.command.cmd) {
-				serviceParams.command = loadContent.command.cmd;
+			soajs.inputmaskData = {
+				action: "analytics",
+				env: env.code.toLowerCase(),
+				recipe: '592d78e7233334743e066d2c'
+			};
+			switch (service) {
+				case 'logstash':
+					combo.conditions.name = 'Logstash Recipe';
+					soajs.inputmaskData.custom = {
+						deployConfig: {
+							'replication': {
+								'mode': 'replicated'
+							}
+						}
+					};
+					if (env.deployer.selected.split(".")[1] === "kubernetes") {
+						soajs.inputmaskData.custom.deployConfig.replication.mode = 'deployment';
+					}
+					break;
+				case 'kibana':
+					combo.conditions.name = 'Kibana Recipe';
+					soajs.inputmaskData.custom = {
+						env: {
+							ELASTICSEARCH_URL: 'http://' + auto.getElasticClientNode,
+						},
+						deployConfig: {
+							'replication': {
+								'mode': 'replicated'
+							}
+						}
+					};
+					if (env.deployer.selected.split(".")[1] === "kubernetes") {
+						soajs.inputmaskData.custom.deployConfig.replication.mode = 'deployment';
+					}
+					break;
+				case 'metricbeat':
+					soajs.inputmaskData.custom = {
+						deployConfig: {
+							'replication': {
+								'mode': 'global'
+							}
+						}
+					};
+					combo.conditions.name = 'Metricbeat Recipe';
+					if (env.deployer.selected.split(".")[1] === "kubernetes") {
+						soajs.inputmaskData.custom.deployConfig.replication.mode = 'deployment';
+					}
+					break;
 			}
-			if (loadContent.command && loadContent.command.args) {
-				serviceParams.args = loadContent.command.args;
-			}
-			//if deployment is kubernetes
-			let esNameSpace = '';
-			let logNameSpace = '';
-			if (env.deployer.selected.split(".")[1] === "kubernetes") {
-				//"soajs.service.mode": "deployment"
-				if (serviceParams.labels["soajs.service.mode"] === "replicated") {
-					serviceParams.labels["soajs.service.mode"] = "deployment";
+			model.saveEntry(soajs, combo, function (err, recipe) {
+				if (err) {
+					return call(err);
+				}
+				if (!recipe) {
+					return cb("No Recipe found for " + service);
 				}
 				else {
-					serviceParams.labels["soajs.service.mode"] = "daemonset";
+					soajs.inputmaskData.recipe = recipe._id.toString();
 				}
-				if (serviceParams.memoryLimit) {
-					delete serviceParams.memoryLimit;
-				}
-				if (serviceParams.replication.mode === "replicated") {
-					serviceParams.replication.mode = "deployment";
-				}
-				else if (serviceParams.replication.mode === "global") {
-					serviceParams.replication.mode = "daemonset";
-				}
-				4
-				esNameSpace = '-service.' + env.deployer.container["kubernetes"][env.deployer.selected.split('.')[2]].namespace.default;
-				logNameSpace = '-service.' + env.deployer.container["kubernetes"][env.deployer.selected.split('.')[2]].namespace.default;
-				
-				if (env.deployer.container["kubernetes"][env.deployer.selected.split('.')[2]].namespace.perService) {
-					esNameSpace += '-soajs-analytics-elasticsearch-service';
-					logNameSpace += '-' + env.code.toLowerCase() + '-logstash-service';
-				}
-				//change published port name
-				if (service === "elastic") {
-					serviceParams.ports[0].published = 30920;
-				}
+			});
+		}
+	},
+	
+	/**
+	 * check if soajs elasticsearch is deployed
+	 * @param {string} soajs: req.soajs object
+	 * @param {object} deployment: installer deployment object
+	 * @param {object} env: environment object
+	 * @param {string} model: mongo object
+	 * @param {object} auto: object containing tasks done
+	 * @param {function} cb: callback function
+	 */
+	"checkElasticsearch": function (soajs, deployment, env, model, auto, cb) {
+		console.log("Checking Elasticsearch ...");
+		let options = utils.buildDeployerOptions(env, soajs, model);
+		options.params = {
+			deployment: deployment
+		};
+		let flk = "soajs-analytics-elasticsearch";
+		if (env.deployer.selected.split('.')[1] === "kubernetes") {
+			//added support for namespace and perService
+			let namespace = env.deployer.container["kubernetes"][env.deployer.selected.split('.')[2]].namespace.default;
+			if (env.deployer.container["kubernetes"][env.deployer.selected.split('.')[2]].namespace.perService) {
+				namespace += '-soajs-analytics-elasticsearch-service';
 			}
-			if (loadContent.deployConfig.volume) {
-				if (env.deployer.selected.split(".")[1] === "kubernetes") {
-					serviceParams.voluming = {
-						"volumes": [],
-						"volumeMounts": []
-					};
-					loadContent.deployConfig.volume.forEach(function (oneVolume) {
-						serviceParams.voluming.volumes.push({
-							"name": oneVolume.Source,
-							"hostPath": {
-								"path": oneVolume.Target
-							}
-						});
-						serviceParams.voluming.volumeMounts.push({
-							"name": oneVolume.Source,
-							"mountPath": oneVolume.Target
-						});
-					})
+			flk += '.-service' + namespace;
+		}
+		function check(cb) {
+			deployer.listServices(options, function (err, servicesList) {
+				if (err) {
+					return cb(err);
 				}
-				else if (env.deployer.selected.split(".")[1] === "docker") {
-					if (service === "metricbeat") {
-						loadContent.deployConfig.volume[0].Source = loadContent.deployConfig.volume[0].Target;
+				let found = false;
+				servicesList.forEach(function (oneService) {
+					if (flk === oneService.name) {
+						found = true;
 					}
-					serviceParams.voluming = {
-						"volumes": loadContent.deployConfig.volume
-					};
-				}
-			}
-			if (loadContent.deployConfig.annotations) {
-				serviceParams.annotations = loadContent.deployConfig.annotations;
-			}
-			serviceParams = JSON.stringify(serviceParams);
-			//add namespace
-			if (service === "logstash" || service === "metricbeat" || service === "kibana") {
-				serviceParams = serviceParams.replace(/%esNameSpace%/g, esNameSpace);
-			}
-			if (service === "filebeat") {
-				serviceParams = serviceParams.replace(/%logNameSpace%/g, logNameSpace);
-			}
-			serviceParams = serviceParams.replace(/%env%/g, env.code.toLowerCase());
-			serviceParams = JSON.parse(serviceParams);
-			serviceParams.deployment = deployment;
-			return cb(null, serviceParams);
-		});
+				});
+				return found ? cb(null, true) : cb(null, false)
+			});
+		}
+		
+		return check(cb);
 	},
 	
 	/**
 	 * deploy elasticsearch
-	 * @param {object} soajs: elk file name
+	 * @param {string} soajs: req.soajs object
+	 * @param {string} config: configuration object
+	 * @param {string} mode: dashboard or installer
 	 * @param {object} deployment: deployment object
 	 * @param {object} env: environment object
 	 * @param {object} model: mongo object
+	 * @param {object} auto: object containing tasks done
 	 * @param {function} cb: callback function
 	 */
-	"deployElastic": function (soajs, deployment, env, model, cb) {
-		console.log("Deploying ElasticSearch ...")
-		let combo = {};
-		combo.collection = collection.analytics;
-		combo.conditions = {
-			"_type": "settings"
-		};
-		model.findEntry(soajs, combo, function (error, settings) {
-			if (error) {
-				return cb(error);
-			}
-			if (settings && settings.elasticsearch &&
-				//either elastic is deployed or its external
-				(settings.elasticsearch.external || settings.elasticsearch.status === "deployed")) {
-				return cb(null, true)
-			}
-			else {
-				lib.getAnalyticsContent("elastic", deployment, env, settings, function (err, content) {
-					if (err) {
-						return cb(err);
-					}
-					let options = utils.buildDeployerOptions(env, soajs, model);
-					options.params = content;
-					async.parallel({
-						"deploy": function (call) {
-							deployer.deployService(options, call);
-						},
-						"update": function (call) {
-							//Todo fix this
-							settings.elasticsearch.status = "deployed";
-							combo.record = settings;
-							model.saveEntry(soajs, combo, call);
+	"deployElastic": function (soajs, config, mode, deployment, env, model, auto, cb) {
+		console.log("Deploying ElasticSearch ...");
+		if (mode === "dashboard") {
+			lib.checkElasticsearch(soajs, deployment, env, model, auto, function (err, deployed) {
+				if (err) {
+					return cb(err);
+				}
+				if (deployed) {
+					return cb(null, true)
+				}
+				deployElasticSearch(cb);
+			});
+		}
+		else {
+			deployElasticSearch(cb);
+		}
+		function deployElasticSearch(call) {
+			let combo = {};
+			combo.collection = collection.analytics;
+			combo.conditions = {
+				"_type": "settings"
+			};
+			model.findEntry(soajs, combo, function (error, settings) {
+				if (error) {
+					return call(error);
+				}
+				if (settings && settings.elasticsearch &&
+					//either elastic is deployed or its external
+					(settings.elasticsearch.external || settings.elasticsearch.status === "deployed")) {
+					return call(null, true)
+				}
+				else {
+					lib.getAnalyticsContent(soajs, config, model, "elastic", null, deployment, env, settings, null, null, function (err, content) {
+						if (err) {
+							return call(err);
 						}
-					}, cb);
-				});
-			}
-		});
+						let options = utils.buildDeployerOptions(env, soajs, model);
+						options.params = content;
+						async.parallel({
+							"deploy": function (callback) {
+								deployer.deployService(options, callback);
+							},
+							"update": function (callback) {
+								settings.elasticsearch.status = "deployed";
+								combo.record = settings;
+								model.saveEntry(soajs, combo, callback);
+							}
+						}, call);
+					});
+				}
+			});
+		}
+		
 	},
 	
 	/**
 	 * ping elasticsearch
-	 * @param {object} esClient: cluster info
-	 * @param {object} soajs: soajs object in req
+	 * @param {object} esClient: elasticsearch connector object
 	 * @param {function} cb: callback function
 	 */
 	"pingElastic": function (esClient, cb) {
@@ -291,7 +466,7 @@ const lib = {
 	
 	/**
 	 * check if elasticsearch is ready
-	 * @param {object} esClient: cluster info
+	 * @param {object} esClient: elasticsearch connector object
 	 * @param {function} cb: callback function
 	 */
 	"infoElastic": function (esClient, cb) {
@@ -309,11 +484,11 @@ const lib = {
 	
 	/**
 	 * check elasticsearch overall availability
-	 * @param {object} esClient: cluster info
-	 * @param {object} soajs: soajs object in req
+	 * @param {object} esClient: elasticsearch connector object
+	 * @param {object} auto: object containing tasks done
 	 * @param {function} cb: callback function
 	 */
-	"checkElasticSearch": function (esClient, settings, cb) {
+	"pingElasticsearch": function (esClient, auto, cb) {
 		console.log("Checking ElasticSearch Availablity...")
 		lib.pingElastic(esClient, cb);
 		//add version to settings record
@@ -322,29 +497,76 @@ const lib = {
 	
 	/**
 	 * check elasticsearch overall availability
-	 * @param {object} esClient: cluster info
+	 * @param {object} esClient: elasticsearch connector object
+	 * @param {object} esCluster: cluster info
+	 * @param {object} auto: object containing tasks done
 	 * @param {function} cb: callback function
 	 */
-	"getElasticClientNode": function (esClient, cb) {
-		console.log("Get Elasticsearch Client node...")
-		esClient.node.info({}, function (err, res) {
-			console.log("-------err--------")
-			console.log(JSON.stringify(err, null, 2));
-			console.log("-------res--------")
-			console.log(JSON.stringify(res, null, 2));
-			process.exit(-1);
-			return cb(null, true);
-		});
+	"getElasticClientNode": function (esClient, esCluster, auto, cb) {
+		console.log("Get Elasticsearch Client node...");
+		let elasticAddress;
+		
+		function getNode(esCluster, nodes) {
+			let servers = [];
+			esCluster.servers.forEach(function (server) {
+				servers.push(server.host + ":" + server.port);
+			});
+			let coordinatingNode, masterNode;
+			for (var oneNode in nodes) {
+				if (nodes.hasOwnProperty(oneNode)) {
+					if (servers.indexOf(nodes[oneNode].http.publish_address) !== -1) {
+						let settings = nodes[oneNode].settings.node;
+						if (settings.hasOwnProperty("master") && settings.master === "true") {
+							masterNode = nodes[oneNode].http.publish_address;
+						}
+						if (settings && settings.hasOwnProperty("data") && settings.data === "false"
+							&& settings.hasOwnProperty("master") && settings.master === "false"
+							&& settings.hasOwnProperty("ingest") && settings.ingest === "false") {
+							elasticAddress = nodes[oneNode].http.publish_address;
+							break;
+						}
+					}
+					
+				}
+			}
+			if (coordinatingNode) {
+				return coordinatingNode;
+			}
+			else if (masterNode) {
+				return masterNode;
+			}
+			else {
+				return null;
+			}
+		}
+		
+		if (esCluster.servers.length > 1) {
+			esClient.db.nodes.info({}, function (err, res) {
+				if (err) {
+					return cb(err);
+				}
+				elasticAddress = getNode(esCluster, res.nodes);
+				if (!elasticAddress) {
+					return cb("No eligible elasticsearch host found!");
+				}
+				return cb(null, elasticAddress);
+			});
+		}
+		else {
+			elasticAddress = esCluster.servers[0].host + ":" + esCluster.servers[0].port;
+			return cb(null, elasticAddress);
+		}
 	},
 	
 	/**
 	 * add mappings and templates to es
 	 * @param {object} soajs: soajs object in req
 	 * @param {object} model: Mongo object
-	 * @param {object} esClient: cluster info
+	 * @param {object} esClient: elasticsearch connector object
+	 * @param {object} auto: object containing tasks done
 	 * @param {function} cb: callback function
 	 */
-	"setMapping": function (soajs, model, esClient, cb) {
+	"setMapping": function (soajs, model, esClient, auto, cb) {
 		console.log("Adding Mapping and templates");
 		async.series({
 			"mapping": function (callback) {
@@ -392,7 +614,7 @@ const lib = {
 	 * add mappings to es
 	 * @param {object} soajs: soajs object in req
 	 * @param {object} model: Mongo object
-	 * @param {object} esClient: cluster info
+	 * @param {object} esClient: elasticsearch connector object
 	 * @param {function} cb: callback function
 	 */
 	"putMapping": function (soajs, model, esClient, cb) {
@@ -423,12 +645,13 @@ const lib = {
 	 * add kibana visualizations to es
 	 * @param {object} soajs: soajs object in req
 	 * @param {object} deployment: deployment object
-	 * @param {object} esClient: cluster info
+	 * @param {object} esClient: elasticsearch connector object
 	 * @param {object} env: environment object
 	 * @param {object} model: Mongo object
+	 * @param {object} auto: object containing tasks done
 	 * @param {function} cb: callback function
 	 */
-	"addVisualizations": function (soajs, deployment, esClient, env, model, cb) {
+	"addVisualizations": function (soajs, deployment, esClient, env, model, auto, cb) {
 		console.log("Adding Kibana Visualizations");
 		let options = utils.buildDeployerOptions(env, soajs, model);
 		options.params = {
@@ -441,7 +664,7 @@ const lib = {
 	
 	/**
 	 * do es bulk operations
-	 * @param {object} esClient: cluster info
+	 * @param {object} esClient:elasticsearch connector object
 	 * @param {object} array: array of data
 	 * @param {function} cb: callback function
 	 */
@@ -452,7 +675,7 @@ const lib = {
 	/**
 	 * add metricbeat and filebeat visualizations
 	 * @param {object} soajs: soajs object in req
-	 * @param {object} esClient: cluster info
+	 * @param {object} esClient: elasticsearch connector object
 	 * @param {array} servicesList: list of all services
 	 * @param {object} env: environment object
 	 * @param {object} model: Mongo object
@@ -673,12 +896,15 @@ const lib = {
 	/**
 	 * deploy kibana service
 	 * @param {object} soajs: soajs object in req
+	 * @param {string} config: configuration object
+	 * @param {object} catalogDeployment: catalog deployment object
 	 * @param {object} env: environment object
 	 * @param {object} deployment: deployment object
 	 * @param {object} model: Mongo object
+	 * @param {object} auto: object containing tasks done
 	 * @param {function} cb: callback function
 	 */
-	"deployKibana": function (soajs, deployment, env, model, cb) {
+	"deployKibana": function (soajs, config, catalogDeployment, deployment, env, model, auto, cb) {
 		console.log("Checking Kibana");
 		let combo = {};
 		combo.collection = collection.analytics;
@@ -695,7 +921,7 @@ const lib = {
 			}
 			else {
 				console.log("Deploying Kibana..");
-				lib.getAnalyticsContent("kibana", deployment, env, settings, function (err, content) {
+				lib.getAnalyticsContent(soajs, config, model, "kibana", catalogDeployment, deployment, env, settings, auto, null, function (err, content) {
 					if (err) {
 						return cb(err);
 					}
@@ -722,12 +948,16 @@ const lib = {
 	/**
 	 * deploy logstash service
 	 * @param {object} soajs: soajs object in req
+	 * @param {string} config: configuration object
+	 * @param {object} catalogDeployment: catalog deployment object
 	 * @param {object} deployment: deployment object
 	 * @param {object} env: environment object
 	 * @param {object} model: Mongo object
+	 * @param {object} esCluster: elasticsearch cluster
+	 * @param {object} auto: object containing tasks done
 	 * @param {function} cb: callback function
 	 */
-	"deployLogstash": function (soajs, deployment, env, model, cb) {
+	"deployLogstash": function (soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
 		console.log("Checking Logstash..");
 		let combo = {};
 		combo.collection = collection.analytics;
@@ -743,7 +973,7 @@ const lib = {
 				return cb(null, true);
 			}
 			else {
-				lib.getAnalyticsContent("logstash", deployment, env, settings, function (err, content) {
+				lib.getAnalyticsContent(soajs, config, model, "logstash", catalogDeployment, deployment, env, settings, auto, esCluster, function (err, content) {
 					if (err) {
 						return cb(err);
 					}
@@ -774,12 +1004,14 @@ const lib = {
 	/**
 	 * deploy filebeat service
 	 * @param {object} soajs: soajs object in req
+	 * @param {string} config: configuration object
 	 * @param {object} deployment: deployment object
 	 * @param {object} env: environment object
 	 * @param {object} model: Mongo object
+	 * @param {object} auto: object containing tasks done
 	 * @param {function} cb: callback function
 	 */
-	"deployFilebeat": function (soajs, deployment, env, model, cb) {
+	"deployFilebeat": function (soajs, config, deployment, env, model, auto, cb) {
 		console.log("Checking Filebeat..");
 		let combo = {};
 		combo.collection = collection.analytics;
@@ -795,7 +1027,7 @@ const lib = {
 				return cb(null, true);
 			}
 			else {
-				lib.getAnalyticsContent("filebeat", deployment, env, settings, function (err, content) {
+				lib.getAnalyticsContent(soajs, config, model, "filebeat", null, deployment, env, settings, null, null, function (err, content) {
 					if (err) {
 						return cb(err);
 					}
@@ -826,12 +1058,16 @@ const lib = {
 	/**
 	 * deploy metricbeat service
 	 * @param {object} soajs: soajs object in req
+	 * @param {string} config: configuration object
+	 * @param {object} catalogDeployment: catalog deployment object
 	 * @param {object} deployment: deployment object
 	 * @param {object} env: environment object
+	 * @param {object} esCluster: elasticsearch cluster
+	 * @param {object} auto: object containing tasks done
 	 * @param {object} model: Mongo object
 	 * @param {function} cb: callback function
 	 */
-	"deployMetricbeat": function (soajs, deployment, env, model, cb) {
+	"deployMetricbeat": function (soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
 		console.log("Checking Metricbeat..");
 		let combo = {};
 		combo.collection = collection.analytics;
@@ -847,7 +1083,7 @@ const lib = {
 				return cb(null, true);
 			}
 			else {
-				lib.getAnalyticsContent("metricbeat", deployment, env, settings, function (err, content) {
+				lib.getAnalyticsContent(soajs, config, "metricbeat", catalogDeployment, deployment, env, settings, auto, esCluster, function (err, content) {
 					if (err) {
 						return cb(err);
 					}
@@ -880,9 +1116,10 @@ const lib = {
 	 * @param {object} deployment: deployment object
 	 * @param {object} env: environment object
 	 * @param {object} model: Mongo object
+	 * @param {object} auto: object containing tasks done
 	 * @param {function} cb: callback function
 	 */
-	"checkAvailability": function (soajs, deployment, env, model, cb) {
+	"checkAvailability": function (soajs, deployment, env, model, auto, cb) {
 		console.log("Finalizing...");
 		let options = utils.buildDeployerOptions(env, soajs, model);
 		options.params = {
@@ -927,12 +1164,14 @@ const lib = {
 	/**
 	 * add default index to kibana
 	 * @param {object} soajs: soajs object in req
-	 * @param {object} esClient: cluster info
+	 * @param {object} deployment: deployment object
+	 * @param {object} esClient: elasticsearch connector object
 	 * @param {object} env: environment object
 	 * @param {object} model: Mongo object
+	 * @param {object} auto: object containing tasks done
 	 * @param {function} cb: callback function
 	 */
-	"setDefaultIndex": function (soajs, deployment, esClient, env, model, cb) {
+	"setDefaultIndex": function (soajs, deployment, esClient, env, model, auto, cb) {
 		let index = {
 			index: ".kibana",
 			type: 'config',
