@@ -505,7 +505,6 @@ const lib = {
 	"getElasticClientNode": function (esClient, esCluster, auto, cb) {
 		console.log("Get Elasticsearch Client node...");
 		let elasticAddress;
-		
 		function getNode(esCluster, nodes) {
 			let servers = [];
 			esCluster.servers.forEach(function (server) {
