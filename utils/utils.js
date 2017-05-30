@@ -71,7 +71,7 @@ const utils = {
 			'tenantSpecific': false,
 			'usedForAnalytics': true,
 		};
-		dashboard.clusters[es_analytics_cluster_name] = es_analytics_cluster;
+		dashboard.dbs.clusters[es_analytics_cluster_name] = es_analytics_cluster;
 		
 		async.parallel({
 			updateDashboard: function (call) {
