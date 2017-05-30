@@ -199,7 +199,7 @@ const script = {
 				step.deployElastic(opts.soajs, opts.config, mode, opts.dashboard, opts.envRecord, opts.model, null, call)
 			},
 			updateDb: function (call) {
-				utils.addEsClusterToDashboard(opts.soajs, opts.model, config, opts.dashboard, opts.envRecord, settings, call)
+				utils.addEsClusterToDashboard(opts.soajs, opts.model, config, opts.dashboard, opts.envRecord, opts.settings, call)
 			}
 		}, cb)
 	}
