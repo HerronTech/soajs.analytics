@@ -252,8 +252,10 @@ const lib = {
 					console.log("--------fillCatalogOpts-------")
 					catalogDeployment.deployService(config, soajs, soajs.registry, {}, function (error, data) {
 						console.log("--------catalogDeployment-------")
-						if(err){
-							return cb(err);
+						console.log(JSON.stringify(error, null, 2))
+						console.log("--------err-------")
+						if(error){
+							return cb(error);
 						}
 						console.log("????????")
 						console.log(JSON.stringify(data, null, 2))
