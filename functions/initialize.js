@@ -274,7 +274,8 @@ const lib = {
 			let combo = {};
 			combo.collection = collection.catalogs;
 			combo.conditions = {
-				"_type": "elk"
+				"_type": "elk",
+				
 			};
 			soajs.inputmaskData = {
 				action: "analytics",
@@ -325,7 +326,7 @@ const lib = {
 					}
 					break;
 			}
-			model.saveEntry(soajs, combo, function (err, recipe) {
+			model.findEntry(soajs, combo, function (err, recipe) {
 				console.log("--------2----------")
 				if (err) {
 					return call(err);
