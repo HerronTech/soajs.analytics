@@ -50,6 +50,10 @@ const script = {
 				data.elasticsearch = settings.elasticsearch;
 			}
 		}
+		console.log("---------------")
+		console.log(opts)
+		console.log(data)
+		console.log("---------------")
 		return cb(null, data);
 	},
 	
