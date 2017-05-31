@@ -51,8 +51,8 @@ const script = {
 			}
 		}
 		console.log("---------------")
-		console.log(opts)
-		console.log(data)
+		console.log(env, "env")
+		console.log(data, "data")
 		console.log("---------------")
 		return cb(null, data);
 	},
