@@ -239,7 +239,6 @@ const lib = {
 				serviceParams = serviceParams.replace(/%env%/g, env.code.toLowerCase());
 				serviceParams = JSON.parse(serviceParams);
 				serviceParams.deployment = deployment;
-				console.log(JSON.stringify(serviceParams, null, 2))
 				return cb(null, serviceParams);
 				
 			});
@@ -249,20 +248,7 @@ const lib = {
 			//call mongo and get the recipe id
 			if (service === "metricbeat" || service === "logstash" || service === "kibana") {
 				fillCatalogOpts (soajs, model, function(err){
-					console.log("--------fillCatalogOpts-------")
-					catalogDeployment.deployService(config, soajs, soajs.registry, {}, function (error, data) {
-						console.log("--------catalogDeployment-------")
-						console.log(JSON.stringify(error, null, 2))
-						console.log("--------err-------")
-						if(error){
-							return cb(error);
-						}
-						console.log("????????")
-						console.log(JSON.stringify(data, null, 2))
-						console.log("????error????")
-						console.log(JSON.stringify(error, null, 2))
-						return cb(null, data);
-					});
+					catalogDeployment.deployService(config, soajs, soajs.registry, {}, cb);
 				});
 			}
 			else {
@@ -274,47 +260,51 @@ const lib = {
 			let combo = {};
 			combo.collection = collection.catalogs;
 			combo.conditions = {
-				"_type": "elk",
+				"type": "elk",
 				
 			};
-			soajs.inputmaskData = {
-				action: "analytics",
-				env: env.code.toLowerCase()
-			};
-			console.log("--------1----------")
 			switch (service) {
 				case 'logstash':
 					combo.conditions.name = 'Logstash Recipe';
-					soajs.inputmaskData.custom = {
-						deployConfig: {
+					soajs.inputmaskData = {
+						custom : {},
+						deployConfig : {
 							'replication': {
 								'mode': 'replicated'
 							}
 						}
 					};
 					if (env.deployer.selected.split(".")[1] === "kubernetes") {
-						soajs.inputmaskData.custom.deployConfig.replication.mode = 'deployment';
+						soajs.inputmaskData.deployConfig.replication.mode = 'deployment';
 					}
 					break;
 				case 'kibana':
 					combo.conditions.name = 'Kibana Recipe';
-					soajs.inputmaskData.custom = {
-						env: {
-							ELASTICSEARCH_URL: 'http://' + auto.getElasticClientNode,
+					soajs.inputmaskData = {
+						custom : {
+							env: {
+								ELASTICSEARCH_URL: 'http://' + auto.getElasticClientNode,
+							}
 						},
-						deployConfig: {
+						deployConfig : {
 							'replication': {
 								'mode': 'replicated'
 							}
 						}
 					};
 					if (env.deployer.selected.split(".")[1] === "kubernetes") {
-						soajs.inputmaskData.custom.deployConfig.replication.mode = 'deployment';
+						soajs.inputmaskData.deployConfig.replication.mode = 'deployment';
 					}
 					break;
 				case 'metricbeat':
-					soajs.inputmaskData.custom = {
-						deployConfig: {
+					soajs.inputmaskData.deployConfig= {
+						'replication': {
+							'mode': 'global'
+						}
+					};
+					soajs.inputmaskData = {
+						custom : {},
+						deployConfig : {
 							'replication': {
 								'mode': 'global'
 							}
@@ -322,12 +312,11 @@ const lib = {
 					};
 					combo.conditions.name = 'Metricbeat Recipe';
 					if (env.deployer.selected.split(".")[1] === "kubernetes") {
-						soajs.inputmaskData.custom.deployConfig.replication.mode = 'deployment';
+						soajs.inputmaskData.deployConfig.replication.mode = 'deployment';
 					}
 					break;
 			}
 			model.findEntry(soajs, combo, function (err, recipe) {
-				console.log("--------2----------")
 				if (err) {
 					return call(err);
 				}
@@ -335,6 +324,8 @@ const lib = {
 					return call("No Recipe found for " + service);
 				}
 				else {
+					soajs.inputmaskData.action = "analytics";
+					soajs.inputmaskData.env = env.code.toLowerCase();
 					soajs.inputmaskData.recipe = recipe._id.toString();
 					return call(null, true);
 				}
