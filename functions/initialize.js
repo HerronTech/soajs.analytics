@@ -249,7 +249,9 @@ const lib = {
 			//call mongo and get the recipe id
 			if (service === "metricbeat" || service === "logstash" || service === "kibana") {
 				fillCatalogOpts (soajs, model, function(err){
+					console.log("--------fillCatalogOpts-------")
 					catalogDeployment.deployService(config, soajs, soajs.registry, {}, function (error, data) {
+						console.log("--------catalogDeployment-------")
 						if(err){
 							return cb(err);
 						}
@@ -276,6 +278,7 @@ const lib = {
 				action: "analytics",
 				env: env.code.toLowerCase()
 			};
+			console.log("--------1----------")
 			switch (service) {
 				case 'logstash':
 					combo.conditions.name = 'Logstash Recipe';
@@ -321,6 +324,7 @@ const lib = {
 					break;
 			}
 			model.saveEntry(soajs, combo, function (err, recipe) {
+				console.log("--------2----------")
 				if (err) {
 					return call(err);
 				}

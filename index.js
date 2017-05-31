@@ -7,9 +7,6 @@ const config = require("./config.js");
 
 module.exports = {
 	"checkAnalytics": function(opts, cb){
-		console.log("---------------")
-		console.log(opts, "opts")
-		console.log("---------------")
 		script.checkAnalytics(opts.settings, opts.env, cb);
 	},
 	"activateAnalytics": function (opts, mode, cb) {
