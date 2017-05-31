@@ -215,12 +215,12 @@ const lib = {
 				//add support for multiple elasticsearch hosts;
 				if (service === "logstash" || service === "metricbeat") {
 					serviceParams.variables.push(
-						"SOAJS_ANALYTICS_ES_NB" + ":" +  esCluster.servers.length
+						"SOAJS_ANALYTICS_ES_NB" + "=" +  esCluster.servers.length
 					);
 					let counter = 1;
 					esCluster.servers.forEach(function (server) {
-						serviceParams.variables.push("SOAJS_ANALYTICS_ES_IP_" + counter + ":" + server.host);
-						serviceParams.variables.push("SOAJS_ANALYTICS_ES_PORT_" + counter + ":" + server.port);
+						serviceParams.variables.push("SOAJS_ANALYTICS_ES_IP_" + counter + "=" + server.host);
+						serviceParams.variables.push("SOAJS_ANALYTICS_ES_PORT_" + counter + "=" + server.port);
 						counter++;
 					});
 				}
@@ -239,6 +239,7 @@ const lib = {
 				serviceParams = serviceParams.replace(/%env%/g, env.code.toLowerCase());
 				serviceParams = JSON.parse(serviceParams);
 				serviceParams.deployment = deployment;
+				console.log(JSON.stringify(serviceParams, null, 2))
 				return cb(null, serviceParams);
 				
 			});
@@ -1146,7 +1147,6 @@ const lib = {
 					}
 				});
 				if (failed.length !== 0) {
-					console.log(failed);
 					setTimeout(function () {
 						check(cb);
 					}, 1000);

@@ -17,11 +17,11 @@ module.exports = {
 	},
 	"command": {
 		"cmd": ["bash"],
-		"args": ["-c", "logstash -f /usr/share/logstash/config/logstash.conf"]
+		"args": ["-c", "node index.js -T logstash"]
 	},
 	"deployConfig": {
 		"image": "soajstest/logstash",
-		"workDir": "/",
+		"workDir": "/opt/soajs/deployer",
 		"memoryLimit": 1000000000,
 		"network": "soajsnet",
 		"ports": [

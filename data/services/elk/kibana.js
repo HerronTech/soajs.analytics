@@ -14,10 +14,14 @@ module.exports = {
 		"soajs.service.label": "kibana",
 		"soajs.service.mode": "replicated"
 	},
+	"command": {
+		"cmd": ["bash"],
+		"args": ["-c", "node index.js -T kibana"]
+	},
 	"deployConfig": {
 		"version": "5.3.0",
 		"image": "soajstest/kibana",
-		"workDir": "/",
+		"workDir": "/opt/soajs/deployer",
 		"memoryLimit": 1000000000,
 		"network": "soajsnet",
 		"ports": [

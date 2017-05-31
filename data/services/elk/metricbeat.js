@@ -17,7 +17,12 @@ module.exports = {
 		"soajs.service.label": "soajs-metricbeat",
 		"soajs.service.mode": "global"
 	},
+	"command": {
+		"cmd": ["sh"],
+		"args": ["-c", "node index.js -T metricbeat"]
+	},
 	"deployConfig": {
+		"workDir": "/opt/soajs/deployer",
 		"image": "soajstest/metricbeat",
 		"memoryLimit": 500000000,
 		"network": "soajsnet",
