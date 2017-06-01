@@ -202,6 +202,14 @@ const script = {
 				utils.addEsClusterToDashboard(opts.soajs, opts.model, config, opts.dashboard, opts.envRecord, opts.settings, call)
 			}
 		}, function (err, response){
+			console.log("-----------------------------------------------------------------")
+			console.log("-----------------------------------------------------------------")
+			console.log("-----------------------------------------------------------------")
+			console.log(err)
+			console.log("ELasticsearch has been deployed")
+			console.log("-----------------------------------------------------------------")
+			console.log("-----------------------------------------------------------------")
+			console.log("-----------------------------------------------------------------")
 			if(err){
 				return cb(err);
 			}
