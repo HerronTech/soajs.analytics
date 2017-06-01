@@ -96,6 +96,7 @@ const utils = {
 				}
 				else {
 					settings.elasticsearch.db_name = es_analytics_db_name;
+					comboS.record = settings;
 					model.saveEntry(soajs, comboS, call);
 				}
 			}
