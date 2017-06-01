@@ -330,6 +330,7 @@ const lib = {
 					soajs.inputmaskData.action = "analytics";
 					soajs.inputmaskData.env = env.code.toLowerCase();
 					soajs.inputmaskData.recipe = recipe._id.toString();
+					console.log(JSON.stringify(soajs.inputmaskData, null, 2), "soajs.inputmaskData")
 					return call(null, true);
 				}
 			});
