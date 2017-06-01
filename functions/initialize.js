@@ -431,7 +431,6 @@ const lib = {
 							"update": function (callback) {
 								settings.elasticsearch.status = "deployed";
 								combo.record = settings;
-								console.log(combo, "------------combo------------")
 								model.saveEntry(soajs, combo, callback);
 							}
 						}, call);

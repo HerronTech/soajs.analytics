@@ -78,7 +78,6 @@ const utils = {
 				let comboD = {};
 				comboD.collection = colls.environment;
 				comboD.record = envRecord;
-				console.log(comboD, "------------comboS - no settings------------")
 				model.saveEntry(soajs, comboD, call);
 			},
 			updateSettings: function (call) {
@@ -93,13 +92,11 @@ const utils = {
 						"db_name": es_analytics_db_name
 					};
 					comboS.record = settings;
-					console.log(comboS, "------------comboS - no settings------------")
 					model.insertEntry(soajs, comboS, call);
 				}
 				else {
 					settings.elasticsearch.db_name = es_analytics_db_name;
 					comboS.record = settings;
-					console.log(comboS, "------------comboS------------");
 					model.saveEntry(soajs, comboS, call);
 				}
 			}
