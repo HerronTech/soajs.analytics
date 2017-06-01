@@ -39,7 +39,7 @@ module.exports = {
 			{
 				"Type": "volume",
 				"ReadOnly": false,
-				"Source": "soajs_log_volume",
+				"Source": "soajs-log-volume",
 				"Target": "/var/log/soajs/"
 			}],
 		"restartPolicy": {
