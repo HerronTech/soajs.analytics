@@ -248,6 +248,9 @@ const lib = {
 			//call mongo and get the recipe id
 			if (service === "metricbeat" || service === "logstash" || service === "kibana") {
 				fillCatalogOpts (soajs, model, function(err){
+					if(err){
+						return cb(err);
+					}
 					catalogDeployment.deployService(config, soajs, soajs.registry, {}, cb);
 				});
 			}
@@ -925,6 +928,7 @@ const lib = {
 					}
 					let options = utils.buildDeployerOptions(env, soajs, model);
 					options.params = content;
+					console.log(JSON.stringify(content, null, 2))
 					async.parallel({
 						"deploy": function (call) {
 							deployer.deployService(options, call);
@@ -978,6 +982,7 @@ const lib = {
 					console.log("Deploying Logstash..");
 					let options = utils.buildDeployerOptions(env, soajs, model);
 					options.params = content;
+					console.log(JSON.stringify(content, null, 2))
 					async.parallel({
 						"deploy": function (call) {
 							deployer.deployService(options, call);
@@ -1032,6 +1037,7 @@ const lib = {
 					console.log("Deploying Filebeat..");
 					let options = utils.buildDeployerOptions(env, soajs, model);
 					options.params = content;
+					console.log(JSON.stringify(content, null, 2))
 					async.parallel({
 						"deploy": function (call) {
 							deployer.deployService(options, call);
@@ -1088,6 +1094,7 @@ const lib = {
 					console.log("Deploying Metricbeat..");
 					let options = utils.buildDeployerOptions(env, soajs, model);
 					options.params = content;
+					console.log(JSON.stringify(content, null, 2))
 					async.parallel({
 						"deploy": function (call) {
 							deployer.deployService(options, call);
