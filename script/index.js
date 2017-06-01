@@ -201,7 +201,15 @@ const script = {
 			updateDb: function (call) {
 				utils.addEsClusterToDashboard(opts.soajs, opts.model, config, opts.dashboard, opts.envRecord, opts.settings, call)
 			}
-		}, cb)
+		}, function (err, response){
+			if(err){
+				return cb(err);
+			}
+			else{
+				opts.soajs.log.warn("ELasticsearch has been deployed...");
+				return cb(null, response);
+			}
+		});
 	}
 	
 };
