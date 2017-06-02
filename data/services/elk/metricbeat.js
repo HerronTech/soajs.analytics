@@ -1,46 +1,42 @@
-/**
- * Created by ragheb on 4/28/17.
- */
 'use strict';
 module.exports = {
-	"env": "dashboard",
-	"name": "soajs-metricbeat",
-	"variables": [
-		//'ELASTICSEARCH_URL=soajs-analytics-elasticsearch%esNameSpace%:9200' //add support for kubernetes (add namespace)
-		//'ELASTICSEARCH_URL=%elasticsearch_url%'
-	],
-	"labels": {
-		"soajs.content": "true",
-		"soajs.service.type": "elk",
-		"soajs.service.name": "soajs-metricbeat",
-		"soajs.service.group": "elk",
-		"soajs.service.label": "soajs-metricbeat",
-		"soajs.service.mode": "global"
-	},
-	"command": {
-		"cmd": ["sh"],
-		"args": ["-c", "node index.js -T metricbeat"]
-	},
-	"deployConfig": {
-		"workDir": "/opt/soajs/deployer",
-		"image": "soajstest/metricbeat",
-		"memoryLimit": 500000000,
-		"network": "soajsnet",
-		"replication": {
-			"mode": "global",
-			"replicas": 1
-		},
-		"volume": [{
-			"Type": "bind",
-			"ReadOnly": true,
-			"Source": "docker-sock",
-			"Target": "/var/run/docker.sock"
-		}],
-		"restartPolicy": {
-			"condition": "any",
-			"maxAttempts": 15
-		}
-	}
+  env: 'dashboard',
+  name: 'soajs-metricbeat',
+  variables: [
+    // 'ELASTICSEARCH_URL=soajs-analytics-elasticsearch%esNameSpace%:9200' //add support for kubernetes (add namespace)
+    // 'ELASTICSEARCH_URL=%elasticsearch_url%'
+  ],
+  labels: {
+    'soajs.content': 'true',
+    'soajs.service.type': 'elk',
+    'soajs.service.name': 'soajs-metricbeat',
+    'soajs.service.group': 'elk',
+    'soajs.service.label': 'soajs-metricbeat',
+    'soajs.service.mode': 'global',
+  },
+  command: {
+    cmd: ['sh'],
+    args: ['-c', 'node index.js -T metricbeat'],
+  },
+  deployConfig: {
+    workDir: '/opt/soajs/deployer',
+    image: 'soajstest/metricbeat',
+    memoryLimit: 500000000,
+    network: 'soajsnet',
+    replication: {
+      mode: 'global',
+      replicas: 1,
+    },
+    volume: [{
+      Type: 'bind',
+      ReadOnly: true,
+      Source: 'docker-sock',
+      Target: '/var/run/docker.sock',
+    }],
+    restartPolicy: {
+      condition: 'any',
+      maxAttempts: 15,
+    },
+  },
 };
-
 

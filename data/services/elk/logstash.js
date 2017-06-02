@@ -1,43 +1,43 @@
 'use strict';
 module.exports = {
-	"env": "%env%",
-	"name": "%env%-logstash",
-	"variables": [
-		//'ELASTICSEARCH_URL=soajs-analytics-elasticsearch%esNameSpace%:9200'
-		//'ELASTICSEARCH_URL=%elasticsearch_url%'
-	],
-	"labels": {
-		"soajs.content": "true",
-		"soajs.env.code": "%env%",
-		"soajs.service.type": "elk",
-		"soajs.service.name": "%env%-logstash",
-		"soajs.service.group": "elk",
-		"soajs.service.label": "%env%-logstash",
-		"soajs.service.mode": "replicated"
-	},
-	"command": {
-		"cmd": ["bash"],
-		"args": ["-c", "node index.js -T logstash"]
-	},
-	"deployConfig": {
-		"image": "soajstest/logstash",
-		"workDir": "/opt/soajs/deployer",
-		"memoryLimit": 1000000000,
-		"network": "soajsnet",
-		"ports": [
-			{
-				"isPublished": false,
-				"published": 12201,
-				"target": 12201
-			}
-		],
-		"replication": {
-			"mode": "replicated",
-			"replicas": 1
-		},
-		"restartPolicy": {
-			"condition": "any",
-			"maxAttempts": 15
-		}
-	}
+  env: '%env%',
+  name: '%env%-logstash',
+  variables: [
+    // 'ELASTICSEARCH_URL=soajs-analytics-elasticsearch%esNameSpace%:9200'
+    // 'ELASTICSEARCH_URL=%elasticsearch_url%'
+  ],
+  labels: {
+    'soajs.content': 'true',
+    'soajs.env.code': '%env%',
+    'soajs.service.type': 'elk',
+    'soajs.service.name': '%env%-logstash',
+    'soajs.service.group': 'elk',
+    'soajs.service.label': '%env%-logstash',
+    'soajs.service.mode': 'replicated',
+  },
+  command: {
+    cmd: ['bash'],
+    args: ['-c', 'node index.js -T logstash'],
+  },
+  deployConfig: {
+    image: 'soajstest/logstash',
+    workDir: '/opt/soajs/deployer',
+    memoryLimit: 1000000000,
+    network: 'soajsnet',
+    ports: [
+      {
+        isPublished: false,
+        published: 12201,
+        target: 12201,
+      },
+    ],
+    replication: {
+      mode: 'replicated',
+      replicas: 1,
+    },
+    restartPolicy: {
+      condition: 'any',
+      maxAttempts: 15,
+    },
+  },
 };
