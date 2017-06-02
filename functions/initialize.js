@@ -269,30 +269,26 @@ const lib = {
 			switch (service) {
 				case 'logstash':
 					combo.conditions.name = 'Logstash Recipe';
-					soajs.inputmaskData = {
-						custom : {},
-						deployConfig : {
+					soajs.inputmaskData.custom = {};
+					soajs.inputmaskData.deployConfig = {
 							'replication': {
 								'mode': 'replicated'
 							}
-						}
-					};
+						};
 					if (env.deployer.selected.split(".")[1] === "kubernetes") {
 						soajs.inputmaskData.deployConfig.replication.mode = 'deployment';
 					}
 					break;
 				case 'kibana':
 					combo.conditions.name = 'Kibana Recipe';
-					soajs.inputmaskData = {
-						custom : {
-							env: {
-								ELASTICSEARCH_URL: 'http://' + auto.getElasticClientNode,
-							}
-						},
-						deployConfig : {
-							'replication': {
-								'mode': 'replicated'
-							}
+					soajs.inputmaskData.custom = {
+						env: {
+							ELASTICSEARCH_URL: 'http://' + auto.getElasticClientNode,
+						}
+					};
+					soajs.inputmaskData.deployConfig = {
+						'replication': {
+							'mode': 'replicated'
 						}
 					};
 					if (env.deployer.selected.split(".")[1] === "kubernetes") {
@@ -300,22 +296,15 @@ const lib = {
 					}
 					break;
 				case 'metricbeat':
-					soajs.inputmaskData.deployConfig= {
+					soajs.inputmaskData.custom = {};
+					soajs.inputmaskData.deployConfig = {
 						'replication': {
 							'mode': 'global'
 						}
 					};
-					soajs.inputmaskData = {
-						custom : {},
-						deployConfig : {
-							'replication': {
-								'mode': 'global'
-							}
-						}
-					};
 					combo.conditions.name = 'Metricbeat Recipe';
 					if (env.deployer.selected.split(".")[1] === "kubernetes") {
-						soajs.inputmaskData.deployConfig.replication.mode = 'deployment';
+						soajs.inputmaskData.deployConfig.replication.mode = 'daemonset';
 					}
 					break;
 			}
