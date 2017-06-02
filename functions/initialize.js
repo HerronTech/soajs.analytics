@@ -143,7 +143,6 @@ const lib = {
           serviceParams.args = loadContent.command.args;
         }
         // if deployment is kubernetes
-        let esNameSpace = '';
         let logNameSpace = '';
         if (env.deployer.selected.split('.')[1] === 'kubernetes') {
           // "soajs.service.mode": "deployment"
@@ -160,11 +159,9 @@ const lib = {
           } else if (serviceParams.replication.mode === 'global') {
             serviceParams.replication.mode = 'daemonset';
           }
-          esNameSpace = `-service.${env.deployer.container.kubernetes[env.deployer.selected.split('.')[2]].namespace.default}`;
           logNameSpace = `-service.${env.deployer.container.kubernetes[env.deployer.selected.split('.')[2]].namespace.default}`;
           
           if (env.deployer.container.kubernetes[env.deployer.selected.split('.')[2]].namespace.perService) {
-            esNameSpace += '-soajs-analytics-elasticsearch-service';
             logNameSpace += `-${env.code.toLowerCase()}-logstash-service`;
           }
           // change published port name
@@ -256,39 +253,33 @@ const lib = {
       switch (service) {
         case 'logstash':
           combo.conditions.name = 'Logstash Recipe';
-          soajs.inputmaskData.custom = {};
-          soajs.inputmaskData.deployConfig = {
-            replication: {
-              mode: 'replicated',
-            },
-          };
-          if (env.deployer.selected.split('.')[1] === 'kubernetes') {
-            soajs.inputmaskData.deployConfig.replication.mode = 'deployment';
-          }
-          break;
-        case 'kibana':
-          combo.conditions.name = 'Kibana Recipe';
           soajs.inputmaskData.custom = {
             env: {
               ELASTICSEARCH_URL: `http://${auto.getElasticClientNode}`,
             },
+            name: 'logstash'
           };
           soajs.inputmaskData.deployConfig = {
             replication: {
               mode: 'replicated',
             },
           };
-          if (env.deployer.selected.split('.')[1] === 'kubernetes') {
-            soajs.inputmaskData.deployConfig.replication.mode = 'deployment';
-          }
+          break;
+        case 'kibana':
+          combo.conditions.name = 'Kibana Recipe';
+          soajs.inputmaskData.custom = {
+            name: 'kibana'
+          };
+          soajs.inputmaskData.deployConfig = {
+            replication: {
+              mode: 'replicated',
+            },
+          };
           break;
         case 'metricbeat':
           soajs.inputmaskData.custom = {
             env: {
-              SOAJS_MONGO_NB: {
-                type: 'computed',
-                value: '1',
-              },
+              name: 'metricbeat'
             },
           };
           soajs.inputmaskData.deployConfig = {
@@ -297,10 +288,11 @@ const lib = {
             },
           };
           combo.conditions.name = 'Metricbeat Recipe';
-          if (env.deployer.selected.split('.')[1] === 'kubernetes') {
-            soajs.inputmaskData.deployConfig.replication.mode = 'daemonset';
-          }
+          
           break;
+      }
+      if (env.deployer.selected.split('.')[1] === 'kubernetes') {
+        soajs.inputmaskData.deployConfig.replication.mode = 'daemonset';
       }
       model.findEntry(soajs, combo, (err, recipe) => {
         if (err) {
@@ -328,7 +320,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   checkElasticsearch(soajs, deployment, env, model, auto, cb) {
-    console.log('Checking Elasticsearch ...');
+    utils.printProgress('Checking Elasticsearch');
     const options = utils.buildDeployerOptions(env, soajs, model);
     options.params = {
       deployment,
@@ -372,7 +364,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployElastic(soajs, config, mode, deployment, env, model, auto, cb) {
-    console.log('Deploying ElasticSearch ...');
+    utils.printProgress('Checking Elasticsearch');
     if (mode === 'dashboard') {
       lib.checkElasticsearch(soajs, deployment, env, model, auto, (err, deployed) => {
         if (err) {
@@ -467,7 +459,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   pingElasticsearch(esClient, auto, cb) {
-    console.log('Checking ElasticSearch Availablity...');
+    utils.printProgress('Checking Elasticsearch Availability');
     lib.pingElastic(esClient, cb);
     // add version to settings record
   },
@@ -480,7 +472,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   getElasticClientNode(esClient, esCluster, auto, cb) {
-    console.log('Get Elasticsearch Client node...');
+    utils.printProgress('Get Elasticsearch Client node');
     let elasticAddress;
     
     function getNode(esCluster, nodes) {
@@ -541,7 +533,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   setMapping(soajs, model, esClient, auto, cb) {
-    console.log('Adding Mapping and templates');
+    utils.printProgress('Adding Mapping and templates');
     async.series({
       mapping(callback) {
         lib.putMapping(soajs, model, esClient, callback);
@@ -623,7 +615,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   addVisualizations(soajs, deployment, esClient, env, model, auto, cb) {
-    console.log('Adding Kibana Visualizations');
+    utils.printProgress('dding Kibana Visualizations');
     const options = utils.buildDeployerOptions(env, soajs, model);
     options.params = {
       deployment,
@@ -864,7 +856,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployKibana(soajs, config, catalogDeployment, deployment, env, model, auto, cb) {
-    console.log('Checking Kibana');
+    utils.printProgress('Checking Kibana');
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
@@ -875,10 +867,10 @@ const lib = {
         return cb(error);
       }
       if (settings && settings.kibana && settings.kibana.status === 'deployed') {
-        console.log('Kibana found..');
+        utils.printProgress('Kibana found');
         return cb(null, true);
       }
-      console.log('Deploying Kibana..');
+      utils.printProgress('Deploying Kibana');
       lib.getAnalyticsContent(soajs, config, model, 'kibana', catalogDeployment, deployment, env, settings, auto, null, (err, content) => {
         if (err) {
           return cb(err);
@@ -915,7 +907,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployLogstash(soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
-    console.log('Checking Logstash..');
+    utils.printProgress('Checking Logstash');
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
@@ -926,14 +918,14 @@ const lib = {
         return cb(error);
       }
       if (settings && settings.logstash && settings.logstash[env.code.toLowerCase()] && settings.logstash[env.code.toLowerCase()].status === 'deployed') {
-        console.log('Logstash found..');
+        utils.printProgress('Logstash found');
         return cb(null, true);
       }
       lib.getAnalyticsContent(soajs, config, model, 'logstash', catalogDeployment, deployment, env, settings, auto, esCluster, (err, content) => {
         if (err) {
           return cb(err);
         }
-        console.log('Deploying Logstash..');
+        utils.printProgress('Deploying Logstash');
         const options = utils.buildDeployerOptions(env, soajs, model);
         options.params = content;
         console.log(JSON.stringify(content, null, 2));
@@ -967,7 +959,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployFilebeat(soajs, config, deployment, env, model, auto, cb) {
-    console.log('Checking Filebeat..');
+    utils.printProgress('Checking Filebeat');
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
@@ -978,14 +970,14 @@ const lib = {
         return cb(error);
       }
       if (settings && settings.filebeat && settings.filebeat[env.code.toLowerCase()] && settings.filebeat[env.code.toLowerCase()].status === 'deployed') {
-        console.log('Filebeat found..');
+        utils.printProgress('Filebeat found');
         return cb(null, true);
       }
       lib.getAnalyticsContent(soajs, config, model, 'filebeat', null, deployment, env, settings, null, null, (err, content) => {
         if (err) {
           return cb(err);
         }
-        console.log('Deploying Filebeat..');
+        utils.printProgress('Deploying Filebeat');
         const options = utils.buildDeployerOptions(env, soajs, model);
         options.params = content;
         console.log(JSON.stringify(content, null, 2));
@@ -1021,7 +1013,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployMetricbeat(soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
-    console.log('Checking Metricbeat..');
+    utils.printProgress('Checking Metricbeat');
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
@@ -1032,14 +1024,14 @@ const lib = {
         return cb(error);
       }
       if (settings && settings.metricbeat && settings.metricbeat && settings.metricbeat.status === 'deployed') {
-        console.log('Metricbeat found..');
+        utils.printProgress('Metricbeat found');
         return cb(null, true);
       }
       lib.getAnalyticsContent(soajs, config, model, 'metricbeat', catalogDeployment, deployment, env, settings, auto, esCluster, (err, content) => {
         if (err) {
           return cb(err);
         }
-        console.log('Deploying Metricbeat..');
+        utils.printProgress('Deploying Metricbeat');
         const options = utils.buildDeployerOptions(env, soajs, model);
         options.params = content;
         console.log(JSON.stringify(content, null, 2));
@@ -1072,14 +1064,14 @@ const lib = {
    * @param {function} cb: callback function
    */
   checkAvailability(soajs, deployment, env, model, auto, cb) {
-    console.log('Finalizing...');
     const options = utils.buildDeployerOptions(env, soajs, model);
+    let counter = 0;
     options.params = {
       deployment,
     };
     const flk = ['kibana', 'logstash', `${env.code.toLowerCase()}-` + 'filebeat', 'soajs-metricbeat'];
-    
     function check(cb) {
+      utils.printProgress('Finalizing', counter++);
       deployer.listServices(options, (err, servicesList) => {
         if (err) {
           return cb(err);
@@ -1122,6 +1114,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   setDefaultIndex(soajs, deployment, esClient, env, model, auto, cb) {
+    let counter = 0;
     const index = {
       index: '.kibana',
       type: 'config',
@@ -1142,6 +1135,7 @@ const lib = {
     };
     
     function getKibanUrl(cb) {
+      utils.printProgress('Waiting for kibana', counter++);
       let url;
       if (deployment && deployment.external) {
         url = `http://${process.env.CONTAINER_HOST}:32601/status`;
@@ -1164,6 +1158,7 @@ const lib = {
     
     // added check for availability of kibana
     function kibanaStatus(cb) {
+      utils.printProgress('Waiting for kibana', counter++);
       request(options, (error, response) => {
         if (error || !response) {
           setTimeout(() => {
@@ -1176,6 +1171,7 @@ const lib = {
     }
     
     function kibanaIndex(cb) {
+      utils.printProgress('Waiting for kibana', counter++);
       esClient.db.search(condition, (err, res) => {
         if (err) {
           return cb(err);

@@ -102,6 +102,28 @@ const utils = {
       },
     }, cb);
   },
+  
+  printProgress(message, counter) {
+    process.stdout.clearLine();
+    process.stdout.write(showTimestamp() + ' - ' + message + ' ' + showDots() + '\r');
+    
+    function showDots() {
+      var output = '';
+      var numOfDots = counter % 5;
+      for (var i = 0; i < numOfDots; i++) {
+        output += '.';
+      }
+      return output;
+    }
+    
+    function showTimestamp() {
+      var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      var now = new Date();
+      return '' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getHours() + ':' +
+        ((now.getMinutes().toString().length === 2) ? now.getMinutes() : '0' + now.getMinutes()) + ':' +
+        ((now.getSeconds().toString().length === 2) ? now.getSeconds() : '0' + now.getSeconds());
+    }
+  },
 };
 
 module.exports = utils;
