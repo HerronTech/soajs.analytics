@@ -22,8 +22,8 @@
     "request": "*",
     "mocha": "3.2.0",
     "soajs": "1.0.*",
-    "soajs.core.drivers": "soajs/soajs.core.drivers.git#feature/analytics"
-
+    "soajs.core.drivers": "soajs/soajs.core.drivers.git#feature/analytics",
+    "uuid": "3.0.1"
   },
   "devDependencies": {
     "bcrypt": "1.0.2",
