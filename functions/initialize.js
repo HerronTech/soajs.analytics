@@ -297,10 +297,12 @@ const lib = {
 					break;
 				case 'metricbeat':
 					soajs.inputmaskData.custom = {
-						SOAJS_MONGO_NB: {
-							"type": "computed",
-							"value": "1"
-						},
+						env: {
+							SOAJS_MONGO_NB: {
+								"type": "computed",
+								"value": "1"
+							},
+						}
 					};
 					soajs.inputmaskData.deployConfig = {
 						'replication': {
