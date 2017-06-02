@@ -283,7 +283,7 @@ const lib = {
 					combo.conditions.name = 'Kibana Recipe';
 					soajs.inputmaskData.custom = {
 						env: {
-							ELASTICSEARCH_URL: 'http://' + auto.getElasticClientNode,
+							ELASTICSEARCH_URL: 'http://' + auto.getElasticClientNode
 						}
 					};
 					soajs.inputmaskData.deployConfig = {
@@ -296,7 +296,12 @@ const lib = {
 					}
 					break;
 				case 'metricbeat':
-					soajs.inputmaskData.custom = {};
+					soajs.inputmaskData.custom = {
+						SOAJS_MONGO_NB: {
+							"type": "computed",
+							"value": "1"
+						},
+					};
 					soajs.inputmaskData.deployConfig = {
 						'replication': {
 							'mode': 'global'
