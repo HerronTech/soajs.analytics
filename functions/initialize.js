@@ -1142,7 +1142,6 @@ const lib = {
     };
     
     function getKibanUrl(cb) {
-      console.log('getKibanUrl');
       let url;
       if (deployment && deployment.external) {
         url = `http://${process.env.CONTAINER_HOST}:32601/status`;
@@ -1165,7 +1164,6 @@ const lib = {
     
     // added check for availability of kibana
     function kibanaStatus(cb) {
-      console.log('kibanaStatus');
       request(options, (error, response) => {
         if (error || !response) {
           setTimeout(() => {
@@ -1178,7 +1176,6 @@ const lib = {
     }
     
     function kibanaIndex(cb) {
-      console.log('kibanaIndex');
       esClient.db.search(condition, (err, res) => {
         if (err) {
           return cb(err);
@@ -1193,7 +1190,6 @@ const lib = {
     }
     
     getKibanUrl((err, url) => {
-      console.log('getKibanUrl');
       if (err) {
         cb(err);
       } else {
