@@ -86,7 +86,7 @@ const utils = {
       updateSettings(call) {
         const comboS = {};
         comboS.collection = colls.analytics;
-        if (!settings || settings === {}) {
+        if (!settings) {
           settings = {};
           settings._type = 'settings';
           settings.env = {};

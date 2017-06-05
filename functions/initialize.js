@@ -382,7 +382,7 @@ const lib = {
           return cb(null, true);
         }
         if (soajs.inputmaskData.elasticsearch === 'local') {
-          async.parallel({
+          async.series({
             deploy(call) {
               deployElasticSearch(call);
             },
