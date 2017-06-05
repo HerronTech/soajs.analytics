@@ -19,8 +19,9 @@
   },
   "dependencies": {
     "async": "^2.1.4",
-    "request": "*",
+    "linebyline": "^1.3.0",
     "mocha": "3.2.0",
+    "request": "*",
     "soajs": "1.0.*",
     "soajs.core.drivers": "soajs/soajs.core.drivers.git#feature/analytics",
     "uuid": "3.0.1"
