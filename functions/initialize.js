@@ -253,14 +253,16 @@ const lib = {
         type: 'elk',
         
       };
+      /**
+       * name : name of the service (resolved to env-name, or name if allEnv is set to true)
+       * env : environent variables
+       * allEnv : if set true, service is not per env
+       */
       switch (service) {
         case 'logstash':
           combo.conditions.name = 'Logstash Recipe';
           soajs.inputmaskData.custom = {
-            env: {
-              ELASTICSEARCH_URL: `http://${auto.getElasticClientNode}`,
-            },
-            name: 'logstash'
+            name: `${env.code.toLowerCase()}-logstash`
           };
           soajs.inputmaskData.deployConfig = {
             replication: {
@@ -271,7 +273,11 @@ const lib = {
         case 'kibana':
           combo.conditions.name = 'Kibana Recipe';
           soajs.inputmaskData.custom = {
-            name: 'kibana'
+            name: 'kibana',
+            allEnv: true,
+            env: {
+              ELASTICSEARCH_URL: `http://${auto.getElasticClientNode}`,
+            },
           };
           soajs.inputmaskData.deployConfig = {
             replication: {
@@ -281,9 +287,8 @@ const lib = {
           break;
         case 'metricbeat':
           soajs.inputmaskData.custom = {
-            env: {
-              name: 'metricbeat'
-            },
+            name: 'metricbeat',
+            allEnv: true,
           };
           soajs.inputmaskData.deployConfig = {
             replication: {
@@ -1114,7 +1119,7 @@ const lib = {
     options.params = {
       deployment,
     };
-    const flk = ['kibana', 'logstash', `${env.code.toLowerCase()}-` + 'filebeat', 'soajs-metricbeat'];
+    const flk = ['kibana', `${env.code.toLowerCase()}-logstash`, `${env.code.toLowerCase()}-filebeat`, 'metricbeat'];
     
     function check(cb) {
       utils.printProgress('Finalizing', counter++);
@@ -1183,7 +1188,7 @@ const lib = {
       method: 'GET',
     };
     
-    function getKibanUrl(cb) {
+    function getKibanaUrl(cb) {
       utils.printProgress('Waiting for kibana', counter++);
       let url;
       if (deployment && deployment.external) {
@@ -1233,8 +1238,8 @@ const lib = {
         }, 500);
       });
     }
-    
-    getKibanUrl((err, url) => {
+  
+    getKibanaUrl((err, url) => {
       if (err) {
         cb(err);
       } else {

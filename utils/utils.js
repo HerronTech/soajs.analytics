@@ -104,14 +104,13 @@ const utils = {
       },
     }, function (err) {
       if (err) {
-        cb(err);
+        return cb(err);
       }
-      return cb (null, es_analytics_cluster)
+      return cb (null, es_analytics_cluster);
     });
   },
   
   printProgress(message, counter) {
-    //process.stdout.clearLine();
     readline.cursorTo(process.stdout, 0);
     process.stdout.write(showTimestamp() + ' - ' + message + ' ' + showDots() + '\r');
     
