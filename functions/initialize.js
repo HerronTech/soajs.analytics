@@ -262,7 +262,7 @@ const lib = {
         case 'logstash':
           combo.conditions.name = 'Logstash Recipe';
           soajs.inputmaskData.custom = {
-            name: `${env.code.toLowerCase()}-logstash`
+            name: 'logstash'
           };
           soajs.inputmaskData.deployConfig = {
             replication: {
