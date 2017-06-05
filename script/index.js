@@ -49,7 +49,7 @@ const script = {
     }
     return cb(null, data);
   },
-
+  
   initialize(opts, mode, cb) {
     const data = {};
     const date = new Date().getTime();
@@ -69,14 +69,14 @@ const script = {
       data[env] = false;
       return cb(null, data);
     }
-
+    
     tracker[env] = {
       info: {
         status: 'started',
         ts: date,
       },
     };
-
+    
     function returnTracker() {
       if (mode === 'dashboard') {
         tracker[env] = {
@@ -90,9 +90,9 @@ const script = {
         return cb(null, data);
       }
     }
-
+    
     returnTracker();
-
+    
     const operations = {
       insertMongoData: async.apply(step.insertMongoData, opts.soajs, opts.model),
       deployElastic: ['insertMongoData', async.apply(step.deployElastic, opts.soajs, opts.config, mode, opts.deployment, opts.envRecord, opts.dashboard, opts.settings, opts.model)],
@@ -107,16 +107,21 @@ const script = {
       checkAvailability: ['deployMetricbeat', async.apply(step.checkAvailability, opts.soajs, opts.deployment, opts.envRecord, opts.model)],
       setDefaultIndex: ['checkAvailability', async.apply(step.setDefaultIndex, opts.soajs, opts.deployment, opts.esClient, opts.envRecord, opts.model)],
     };
-
-    async.auto(operations, (err) => {
+    
+    async.auto(operations, (err, auto) => {
       if (err) {
         if (mode === 'installer') {
           return cb(err);
         }
         return null;
       }
-        // close es connection
-      opts.esClient.close();
+      // close es connection
+      if (opts.soajs.inputmaskData.elasticsearch === 'local') {
+        auto.pingElasticsearch.close();
+      }
+      else {
+        opts.esClient.close();
+      }
       console.log('Analytics deployed');
       if (mode === 'installer') {
         return cb(null, true);
@@ -124,7 +129,7 @@ const script = {
       return null;
     });
   },
-
+  
   deactivate(soajs, env, model, cb) {
     const combo = {};
     combo.collection = collection.analytics;
@@ -146,26 +151,26 @@ const script = {
           tracker = {};
           return cb(null, true);
         }
-
+        
         if (settings.env && settings.env[environment]) {
           settings.env[environment] = false;
         }
-
+        
         if (settings.logstash && settings.logstash[environment]) {
           delete settings.logstash[environment];
         }
-
+        
         if (settings.filebeat && settings.filebeat[environment]) {
           delete settings.filebeat[environment];
         }
-
+        
         if (settings.metricbeat && !activated) {
           delete settings.metricbeat;
         }
         if (settings.kibana && !activated) {
           delete settings.kibana;
         }
-
+        
         // save
         const comboS = {};
         comboS.collection = collection.analytics;
@@ -180,7 +185,7 @@ const script = {
       });
     });
   },
-
+  
   deployElastic(opts, mode, cb) {
     async.parallel({
       deploy(call) {
@@ -197,7 +202,7 @@ const script = {
       return cb(null, response);
     });
   },
-
+  
 };
 
 module.exports = script;
