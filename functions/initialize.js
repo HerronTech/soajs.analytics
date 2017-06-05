@@ -2,6 +2,7 @@
 'use strict';
 const fs = require('fs');
 const async = require('async');
+const mSoajs = require('soajs');
 const request = require('request');
 // const deployer = require('soajs').drivers;
 const deployer = require('soajs.core.drivers');
@@ -102,7 +103,7 @@ const lib = {
    * @param {object} esCluster: elasticsearch cluster
    * @param {function} cb: callback function
    */
-  getAnalyticsContent(soajs, config, model, service, catalogDeployment, deployment, env, settings, auto, esCluster, cb) {
+  getAnalyticsContent(soajs, config, model, service, catalogDeployment, deployment, env, auto, esCluster, cb) {
     if (service === 'elastic' || service === 'filebeat' || (deployment && deployment.external)) {
       const path = `${__dirname}/../data/services/elk/`;
       fs.exists(path, (exists) => {
@@ -119,7 +120,7 @@ const lib = {
           env: loadContent.env,
           name: loadContent.name,
           image: loadContent.deployConfig.image,
-          imagePullPolicy: 'IfNotPresent',
+          imagePullPolicy: 'IfNotPresent', // need to be removed
           variables: loadContent.variables || [],
           labels: loadContent.labels,
           memoryLimit: loadContent.deployConfig.memoryLimit,
@@ -242,6 +243,8 @@ const lib = {
         return cb('invalid service name');
       }
     }
+    //do i need an else??
+    
     
     function fillCatalogOpts(soajs, model, call) {
       const combo = {};
@@ -363,7 +366,7 @@ const lib = {
    * @param {object} auto: object containing tasks done
    * @param {function} cb: callback function
    */
-  deployElastic(soajs, config, mode, deployment, env, model, auto, cb) {
+  deployElastic(soajs, config, mode, deployment, env, dashboard, settings, model, auto, cb) {
     utils.printProgress('Checking Elasticsearch');
     if (mode === 'dashboard') {
       lib.checkElasticsearch(soajs, deployment, env, model, auto, (err, deployed) => {
@@ -373,7 +376,24 @@ const lib = {
         if (deployed) {
           return cb(null, true);
         }
-        deployElasticSearch(cb);
+        if (soajs.inputmaskData.elasticsearch === 'local') {
+          async.parallel({
+            deploy(call) {
+              deployElasticSearch(call);
+            },
+            updateDb(call) {
+              utils.addEsClusterToDashboard(soajs, model, dashboard, env, settings, call);
+            },
+          }, (err, response) => {
+            if (err) {
+              return cb(err);
+            }
+            return cb(null, response.updateDb);
+          });
+        }
+        else {
+          deployElasticSearch(cb);
+        }
       });
     } else {
       deployElasticSearch(cb);
@@ -393,7 +413,7 @@ const lib = {
           (settings.elasticsearch.external || settings.elasticsearch.status === 'deployed')) {
           return call(null, true);
         }
-        lib.getAnalyticsContent(soajs, config, model, 'elastic', null, deployment, env, settings, null, null, (err, content) => {
+        lib.getAnalyticsContent(soajs, config, model, 'elastic', null, deployment, env, null, null, (err, content) => {
           if (err) {
             return call(err);
           }
@@ -458,9 +478,19 @@ const lib = {
    * @param {object} auto: object containing tasks done
    * @param {function} cb: callback function
    */
-  pingElasticsearch(esClient, auto, cb) {
+  pingElasticsearch(soajs, esClient, auto, cb) {
+    if (soajs.inputmaskData.elasticsearch === 'local'){
+      esClient = new mSoajs.es(auto.deployElastic)
+    }
     utils.printProgress('Checking Elasticsearch Availability');
-    lib.pingElastic(esClient, cb);
+    lib.pingElastic(esClient, function(err){
+      if(err){
+        return cb(err);
+      }
+      else {
+        return cb(null, esClient);
+      }
+    });
     // add version to settings record
   },
   
@@ -471,10 +501,13 @@ const lib = {
    * @param {object} auto: object containing tasks done
    * @param {function} cb: callback function
    */
-  getElasticClientNode(esClient, esCluster, auto, cb) {
+  getElasticClientNode(soajs, esClient, esCluster, auto, cb) {
     utils.printProgress('Get Elasticsearch Client node');
     let elasticAddress;
-    
+    if (soajs.inputmaskData.elasticsearch === 'local'){
+      esClient = auto.pingElasticsearch;
+      esCluster = auto.deployElastic;
+    }
     function getNode(esCluster, nodes) {
       const servers = [];
       esCluster.servers.forEach((server) => {
@@ -533,6 +566,9 @@ const lib = {
    * @param {function} cb: callback function
    */
   setMapping(soajs, model, esClient, auto, cb) {
+    if (soajs.inputmaskData.elasticsearch === 'local'){
+      esClient = auto.pingElasticsearch;
+    }
     utils.printProgress('Adding Mapping and templates');
     async.series({
       mapping(callback) {
@@ -615,10 +651,13 @@ const lib = {
    * @param {function} cb: callback function
    */
   addVisualizations(soajs, deployment, esClient, env, model, auto, cb) {
+    if (soajs.inputmaskData.elasticsearch === 'local'){
+      esClient = auto.pingElasticsearch;
+    }
     utils.printProgress('dding Kibana Visualizations');
     const options = utils.buildDeployerOptions(env, soajs, model);
     options.params = {
-      deployment,
+      deployment
     };
     deployer.listServices(options, (err, servicesList) => {
       lib.configureKibana(soajs, servicesList, esClient, env, model, cb);
@@ -871,7 +910,7 @@ const lib = {
         return cb(null, true);
       }
       utils.printProgress('Deploying Kibana');
-      lib.getAnalyticsContent(soajs, config, model, 'kibana', catalogDeployment, deployment, env, settings, auto, null, (err, content) => {
+      lib.getAnalyticsContent(soajs, config, model, 'kibana', catalogDeployment, deployment, env, auto, null, (err, content) => {
         if (err) {
           return cb(err);
         }
@@ -907,6 +946,9 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployLogstash(soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
+    if (soajs.inputmaskData.elasticsearch === 'local'){
+      esCluster = auto.deployElastic;
+    }
     utils.printProgress('Checking Logstash');
     const combo = {};
     combo.collection = collection.analytics;
@@ -921,7 +963,7 @@ const lib = {
         utils.printProgress('Logstash found');
         return cb(null, true);
       }
-      lib.getAnalyticsContent(soajs, config, model, 'logstash', catalogDeployment, deployment, env, settings, auto, esCluster, (err, content) => {
+      lib.getAnalyticsContent(soajs, config, model, 'logstash', catalogDeployment, deployment, env, auto, esCluster, (err, content) => {
         if (err) {
           return cb(err);
         }
@@ -973,7 +1015,7 @@ const lib = {
         utils.printProgress('Filebeat found');
         return cb(null, true);
       }
-      lib.getAnalyticsContent(soajs, config, model, 'filebeat', null, deployment, env, settings, null, null, (err, content) => {
+      lib.getAnalyticsContent(soajs, config, model, 'filebeat', null, deployment, env, null, null, (err, content) => {
         if (err) {
           return cb(err);
         }
@@ -1013,6 +1055,9 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployMetricbeat(soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
+    if (soajs.inputmaskData.elasticsearch === 'local'){
+      esCluster = auto.deployElastic;
+    }
     utils.printProgress('Checking Metricbeat');
     const combo = {};
     combo.collection = collection.analytics;
@@ -1027,7 +1072,7 @@ const lib = {
         utils.printProgress('Metricbeat found');
         return cb(null, true);
       }
-      lib.getAnalyticsContent(soajs, config, model, 'metricbeat', catalogDeployment, deployment, env, settings, auto, esCluster, (err, content) => {
+      lib.getAnalyticsContent(soajs, config, model, 'metricbeat', catalogDeployment, deployment, env, auto, esCluster, (err, content) => {
         if (err) {
           return cb(err);
         }
@@ -1070,6 +1115,7 @@ const lib = {
       deployment,
     };
     const flk = ['kibana', 'logstash', `${env.code.toLowerCase()}-` + 'filebeat', 'soajs-metricbeat'];
+    
     function check(cb) {
       utils.printProgress('Finalizing', counter++);
       deployer.listServices(options, (err, servicesList) => {
@@ -1114,6 +1160,9 @@ const lib = {
    * @param {function} cb: callback function
    */
   setDefaultIndex(soajs, deployment, esClient, env, model, auto, cb) {
+    if (soajs.inputmaskData.elasticsearch === 'local'){
+      esClient = auto.pingElasticsearch;
+    }
     let counter = 0;
     const index = {
       index: '.kibana',

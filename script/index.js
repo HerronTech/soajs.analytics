@@ -94,11 +94,10 @@ const script = {
     returnTracker();
 
     const operations = {
-      //insertMongoData: async.apply(step.test, opts.soajs, opts.model),
       insertMongoData: async.apply(step.insertMongoData, opts.soajs, opts.model),
-      deployElastic: ['insertMongoData', async.apply(step.deployElastic, opts.soajs, opts.config, mode, opts.deployment, opts.envRecord, opts.model)],
-      pingElasticsearch: ['deployElastic', async.apply(step.pingElasticsearch, opts.esClient)],
-      getElasticClientNode: ['pingElasticsearch', async.apply(step.getElasticClientNode, opts.esClient, opts.esCluster)],
+      deployElastic: ['insertMongoData', async.apply(step.deployElastic, opts.soajs, opts.config, mode, opts.deployment, opts.envRecord, opts.dashboard, opts.settings, opts.model)],
+      pingElasticsearch: ['deployElastic', async.apply(step.pingElasticsearch, opts.soajs, opts.esClient)],
+      getElasticClientNode: ['pingElasticsearch', async.apply(step.getElasticClientNode, opts.soajs, opts.esClient, opts.esCluster)],
       setMapping: ['getElasticClientNode', async.apply(step.setMapping, opts.soajs, opts.model, opts.esClient)],
       addVisualizations: ['setMapping', async.apply(step.addVisualizations, opts.soajs, opts.deployment, opts.esClient, opts.envRecord, opts.model)],
       deployKibana: ['addVisualizations', async.apply(step.deployKibana, opts.soajs, opts.config, opts.catalogDeployment, opts.deployment, opts.envRecord, opts.model)],
@@ -182,13 +181,13 @@ const script = {
     });
   },
 
-  deployElastic(opts, mode, config, cb) {
+  deployElastic(opts, mode, cb) {
     async.parallel({
       deploy(call) {
         step.deployElastic(opts.soajs, opts.config, mode, opts.dashboard, opts.envRecord, opts.model, null, call);
       },
       updateDb(call) {
-        utils.addEsClusterToDashboard(opts.soajs, opts.model, config, opts.dashboard, opts.envRecord, opts.settings, call);
+        utils.addEsClusterToDashboard(opts.soajs, opts.model, opts.dashboard, opts.envRecord, opts.settings, call);
       },
     }, (err, response) => {
       if (err) {

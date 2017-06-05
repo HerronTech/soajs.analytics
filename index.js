@@ -2,7 +2,6 @@
 'use strict';
 const model = require('./utils/mongo');
 const script = require('./script/index.js');
-const config = require('./config.js');
 
 module.exports = {
   checkAnalytics(opts, cb) {
@@ -43,6 +42,6 @@ module.exports = {
     if (!opts.catalogDeployment) {
       opts.catalogDeployment = {};
     }
-    script.deployElastic(opts, mode, config, cb);
+    script.deployElastic(opts, mode, cb);
   },
 };
