@@ -34,8 +34,8 @@ module.exports = {
     });
   },
 
-  deactivateAnalytics(opts, tracker, cb) {
-    script.deactivate(opts.soajs, opts.envRecord, opts.model, tracker, cb);
+  deactivateAnalytics(opts, cb) {
+    script.deactivate(opts.soajs, opts.envRecord, opts.model, cb);
   },
 
   deployElastic(opts, mode, cb) {
