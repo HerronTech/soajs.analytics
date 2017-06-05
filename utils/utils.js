@@ -2,7 +2,7 @@
 'use strict';
 const uuid = require('uuid');
 const async = require('async');
-var linebyline = require('linebyline')
+var readline = require('readline')
 
 const config = require('../config.js');
 const colls = {
@@ -112,7 +112,7 @@ const utils = {
   
   printProgress(message, counter) {
     //process.stdout.clearLine();
-    linebyline.cursorTo(process.stdout, 0);
+    readline.cursorTo(process.stdout, 0);
     process.stdout.write(showTimestamp() + ' - ' + message + ' ' + showDots() + '\r');
     
     function showDots() {
