@@ -1160,6 +1160,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   setDefaultIndex(soajs, deployment, esClient, env, model, auto, cb) {
+    utils.printProgress(soajs, 'Waiting for kibana...');
     if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = auto.pingElasticsearch;
     }
@@ -1184,7 +1185,6 @@ const lib = {
     };
     
     function getKibanaUrl(cb) {
-      utils.printProgress(soajs, 'Waiting for kibana', counter++);
       let url;
       if (deployment && deployment.external) {
         url = `http://${process.env.CONTAINER_HOST}:32601/status`;
@@ -1207,7 +1207,6 @@ const lib = {
     
     // added check for availability of kibana
     function kibanaStatus(cb) {
-      utils.printProgress(soajs, 'Waiting for kibana', counter++);
       request(options, (error, response) => {
         if (error || !response) {
           setTimeout(() => {
@@ -1220,7 +1219,6 @@ const lib = {
     }
     
     function kibanaIndex(cb) {
-      utils.printProgress(soajs, 'Waiting for kibana', counter++);
       esClient.db.search(condition, (err, res) => {
         if (err) {
           return cb(err);

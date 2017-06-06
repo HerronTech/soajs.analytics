@@ -110,21 +110,11 @@ const utils = {
   },
   
   printProgress(soajs, message, counter) {
-    try {
-      if(counter) process.stdout.clearLine();
+    if(soajs.log && soajs.log.debug){
+      soajs.log.debug(message);
     }
-    catch (e) {
-    
-    }
-  
-    console.log(showTimestamp() + ' - ' + message + ' ' + showDots() + '\r')
-    function showDots() {
-      var output = '';
-      var numOfDots = counter % 5;
-      for (var i = 0; i < numOfDots; i++) {
-        output += '.';
-      }
-      return output;
+    else{
+      console.log(showTimestamp() + ' - ' + message);
     }
     
     function showTimestamp() {
