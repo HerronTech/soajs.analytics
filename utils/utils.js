@@ -5,7 +5,7 @@ const async = require('async');
 const fs = require('fs');
 
 const config = require('../config.js');
-const colls = {
+const collections = {
   analytics: 'analytics',
   environment: 'environment',
 };
@@ -102,13 +102,13 @@ const utils = {
     async.parallel({
       updateDashboard(call) {
         const comboD = {};
-        comboD.collection = colls.environment;
+        comboD.collection = collections.environment;
         comboD.record = envRecord;
         model.saveEntry(soajs, comboD, call);
       },
       updateSettings(call) {
         const comboS = {};
-        comboS.collection = colls.analytics;
+        comboS.collection = collections.analytics;
         if (!settings) {
           settings = {};
           settings._type = 'settings';
@@ -244,7 +244,7 @@ const utils = {
    */
   putTemplate(soajs, model, esClient, cb) {
     const combo = {
-      collection: collection.analytics,
+      collection: collections.analytics,
       conditions: {_type: 'template'},
     };
     model.findEntries(soajs, combo, (error, templates) => {
@@ -276,7 +276,7 @@ const utils = {
    */
   putMapping(soajs, model, esClient, cb) {
     const combo = {
-      collection: collection.analytics,
+      collection: collections.analytics,
       conditions: {_type: 'mapping'},
     };
     model.findEntries(soajs, combo, (error, mappings) => {
@@ -371,7 +371,7 @@ const utils = {
                       ;
                       const combo = {
                         conditions: options,
-                        collection: collection.analytics,
+                        collection: collections.analytics,
                       };
                       model.findEntries(soajs, combo, (error, records) => {
                         if (error) {
@@ -468,7 +468,7 @@ const utils = {
             ]
           );
           const combo = {
-            collection: collection.analytics,
+            collection: collections.analytics,
             conditions: {
               _shipper: 'metricbeat',
             },
@@ -664,7 +664,7 @@ const utils = {
     
     function fillCatalogOpts(soajs, model, call) {
       const combo = {};
-      combo.collection = collection.catalogs;
+      combo.collection = collections.catalogs;
       combo.conditions = {
         type: 'elk',
         
