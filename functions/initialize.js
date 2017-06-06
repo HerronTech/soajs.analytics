@@ -201,7 +201,7 @@ const lib = {
           serviceParams.annotations = loadContent.deployConfig.annotations;
         }
         // add support for multiple elasticsearch hosts;
-        if (service === 'logstash' || service === 'soajs-metricbeat') {
+        if (service === 'logstash' || service === 'metricbeat') {
           serviceParams.variables.push(
             `${'SOAJS_ANALYTICS_ES_NB' + '='}${esCluster.servers.length}`
           );
