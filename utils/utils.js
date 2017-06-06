@@ -2,6 +2,7 @@
 'use strict';
 const uuid = require('uuid');
 const async = require('async');
+const fs = require('fs');
 
 const config = require('../config.js');
 const colls = {

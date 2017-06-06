@@ -1,6 +1,5 @@
 /* jshint esversion: 6 */
 'use strict';
-const fs = require('fs');
 const async = require('async');
 const mSoajs = require('soajs');
 const request = require('request');
@@ -94,6 +93,8 @@ const lib = {
    * @param {string} mode: dashboard or installer
    * @param {object} deployment: deployment object
    * @param {object} env: environment object
+   * @param {object} dashboard: dashboard environment object
+   * @param {object} settings: settings object
    * @param {object} model: mongo object
    * @param {object} auto: object containing tasks done
    * @param {function} cb: callback function
