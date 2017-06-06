@@ -4,6 +4,7 @@ const uuid = require('uuid');
 const async = require('async');
 const fs = require('fs');
 
+const es = require('./es');
 const config = require('../config.js');
 const collections = {
   analytics: 'analytics',
