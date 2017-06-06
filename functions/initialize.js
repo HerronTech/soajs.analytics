@@ -371,7 +371,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployElastic(soajs, config, mode, deployment, env, dashboard, settings, model, auto, cb) {
-    utils.printProgress(soajs, 'Checking Elasticsearch');
+    utils.printProgress(soajs, 'Deploying Elasticsearch');
     if (mode === 'dashboard') {
       lib.checkElasticsearch(soajs, deployment, env, model, auto, (err, deployed) => {
         if (err) {
