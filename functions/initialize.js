@@ -174,12 +174,12 @@ const lib = {
    * @param {function} cb: callback function
    */
   pingElasticsearch(soajs, esClient, auto, cb) {
-    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
       esClient = new mSoajs.es(auto.deployElastic)
     }
     utils.printProgress(soajs, 'Checking Elasticsearch Availability');
-    utils.pingElastic(esClient, function(err){
-      if(err){
+    utils.pingElastic(esClient, function (err) {
+      if (err) {
         return cb(err);
       }
       else {
@@ -200,7 +200,7 @@ const lib = {
   getElasticClientNode(soajs, esClient, esCluster, auto, cb) {
     utils.printProgress(soajs, 'Get Elasticsearch Client node');
     let elasticAddress;
-    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
       esClient = auto.pingElasticsearch;
       esCluster = auto.deployElastic;
     }
@@ -262,7 +262,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   setMapping(soajs, model, esClient, auto, cb) {
-    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
       esClient = auto.pingElasticsearch;
     }
     utils.printProgress(soajs, 'Adding Mapping and templates');
@@ -287,7 +287,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   addVisualizations(soajs, deployment, esClient, env, model, auto, cb) {
-    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
       esClient = auto.pingElasticsearch;
     }
     utils.printProgress(soajs, 'dding Kibana Visualizations');
@@ -362,7 +362,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployLogstash(soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
-    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
       esCluster = auto.deployElastic;
     }
     utils.printProgress(soajs, 'Checking Logstash');
@@ -469,7 +469,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployMetricbeat(soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
-    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
       esCluster = auto.deployElastic;
     }
     utils.printProgress(soajs, 'Checking Metricbeat');
@@ -574,7 +574,7 @@ const lib = {
    */
   setDefaultIndex(soajs, deployment, esClient, env, model, auto, cb) {
     utils.printProgress(soajs, 'Waiting for kibana...');
-    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
       esClient = auto.pingElasticsearch;
     }
     const index = {
@@ -643,7 +643,7 @@ const lib = {
         }, 500);
       });
     }
-  
+    
     getKibanaUrl((err, url) => {
       if (err) {
         cb(err);
