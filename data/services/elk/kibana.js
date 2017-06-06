@@ -8,10 +8,10 @@ module.exports = {
   ],
   labels: {
     'soajs.content': 'true',
-    'soajs.service.name': 'kibana',
+    'soajs.service.name': 'soajs-kibana',
     'soajs.service.group': 'elk',
     'soajs.service.type': 'elk',
-    'soajs.service.label': 'kibana',
+    'soajs.service.label': 'soajs-kibana',
     'soajs.service.mode': 'replicated',
   },
   command: {

@@ -21,10 +21,10 @@ const lib = {
         // if activated do not remove kibana or metricbeat
         if (oneService.labels['soajs.service.type'] === 'elk'
           && oneService.labels['soajs.service.name'] !== 'soajs-analytics-elasticsearch') {
-          if (activated && ((oneService.labels['soajs.service.name'] === 'metricbeat') ||
-            oneService.labels['soajs.service.name'] === 'kibana')) {
+          if (activated && ((oneService.labels['soajs.service.name'] === 'soajs-metricbeat') ||
+            oneService.labels['soajs.service.name'] === 'soajs-kibana')) {
             return callback(null, true);
-          } else if (oneService.labels['soajs.env.code'] === env || oneService.labels['soajs.service.name'] === 'kibana' || oneService.labels['soajs.service.name'] === 'metricbeat') {
+          } else if (oneService.labels['soajs.env.code'] === env || oneService.labels['soajs.service.name'] === 'soajs-kibana' || oneService.labels['soajs.service.name'] === 'soajs-metricbeat') {
             options.params = {
               id: oneService.id,
               mode: oneService.labels['soajs.service.mode'], // NOTE: required for kubernetes driver only

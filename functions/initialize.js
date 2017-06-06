@@ -201,7 +201,7 @@ const lib = {
           serviceParams.annotations = loadContent.deployConfig.annotations;
         }
         // add support for multiple elasticsearch hosts;
-        if (service === 'logstash' || service === 'metricbeat') {
+        if (service === 'logstash' || service === 'soajs-metricbeat') {
           serviceParams.variables.push(
             `${'SOAJS_ANALYTICS_ES_NB' + '='}${esCluster.servers.length}`
           );
@@ -273,7 +273,7 @@ const lib = {
         case 'kibana':
           combo.conditions.name = 'Kibana Recipe';
           soajs.inputmaskData.custom = {
-            name: 'kibana',
+            name: 'soajs-kibana',
             allEnv: true,
             env: {
               ELASTICSEARCH_URL: `http://${auto.getElasticClientNode}`,
@@ -287,7 +287,7 @@ const lib = {
           break;
         case 'metricbeat':
           soajs.inputmaskData.custom = {
-            name: 'metricbeat',
+            name: 'soajs-metricbeat',
             allEnv: true,
           };
           soajs.inputmaskData.deployConfig = {
@@ -1114,7 +1114,7 @@ const lib = {
     options.params = {
       deployment,
     };
-    const flk = ['kibana', `${env.code.toLowerCase()}-logstash`, `${env.code.toLowerCase()}-filebeat`, 'metricbeat'];
+    const flk = ['soajs-kibana', `${env.code.toLowerCase()}-logstash`, `${env.code.toLowerCase()}-filebeat`, 'soajs-metricbeat'];
     
     function check(cb) {
       utils.printProgress(soajs, 'Finalizing', counter++);
@@ -1164,7 +1164,6 @@ const lib = {
     if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = auto.pingElasticsearch;
     }
-    let counter = 0;
     const index = {
       index: '.kibana',
       type: 'config',
