@@ -327,7 +327,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   checkElasticsearch(soajs, deployment, env, model, auto, cb) {
-    utils.printProgress('Checking Elasticsearch');
+    utils.printProgress(soajs, 'Checking Elasticsearch');
     const options = utils.buildDeployerOptions(env, soajs, model);
     options.params = {
       deployment,
@@ -371,7 +371,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployElastic(soajs, config, mode, deployment, env, dashboard, settings, model, auto, cb) {
-    utils.printProgress('Checking Elasticsearch');
+    utils.printProgress(soajs, 'Checking Elasticsearch');
     if (mode === 'dashboard') {
       lib.checkElasticsearch(soajs, deployment, env, model, auto, (err, deployed) => {
         if (err) {
@@ -486,7 +486,7 @@ const lib = {
     if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = new mSoajs.es(auto.deployElastic)
     }
-    utils.printProgress('Checking Elasticsearch Availability');
+    utils.printProgress(soajs, 'Checking Elasticsearch Availability');
     lib.pingElastic(esClient, function(err){
       if(err){
         return cb(err);
@@ -506,7 +506,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   getElasticClientNode(soajs, esClient, esCluster, auto, cb) {
-    utils.printProgress('Get Elasticsearch Client node');
+    utils.printProgress(soajs, 'Get Elasticsearch Client node');
     let elasticAddress;
     if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = auto.pingElasticsearch;
@@ -573,7 +573,7 @@ const lib = {
     if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = auto.pingElasticsearch;
     }
-    utils.printProgress('Adding Mapping and templates');
+    utils.printProgress(soajs, 'Adding Mapping and templates');
     async.series({
       mapping(callback) {
         lib.putMapping(soajs, model, esClient, callback);
@@ -658,7 +658,7 @@ const lib = {
     if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = auto.pingElasticsearch;
     }
-    utils.printProgress('dding Kibana Visualizations');
+    utils.printProgress(soajs, 'dding Kibana Visualizations');
     const options = utils.buildDeployerOptions(env, soajs, model);
     options.params = {
       deployment
@@ -899,7 +899,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployKibana(soajs, config, catalogDeployment, deployment, env, model, auto, cb) {
-    utils.printProgress('Checking Kibana');
+    utils.printProgress(soajs, 'Checking Kibana');
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
@@ -910,10 +910,10 @@ const lib = {
         return cb(error);
       }
       if (settings && settings.kibana && settings.kibana.status === 'deployed') {
-        utils.printProgress('Kibana found');
+        utils.printProgress(soajs, 'Kibana found');
         return cb(null, true);
       }
-      utils.printProgress('Deploying Kibana');
+      utils.printProgress(soajs, 'Deploying Kibana');
       lib.getAnalyticsContent(soajs, config, model, 'kibana', catalogDeployment, deployment, env, auto, null, (err, content) => {
         if (err) {
           return cb(err);
@@ -952,7 +952,7 @@ const lib = {
     if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esCluster = auto.deployElastic;
     }
-    utils.printProgress('Checking Logstash');
+    utils.printProgress(soajs, 'Checking Logstash');
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
@@ -963,14 +963,14 @@ const lib = {
         return cb(error);
       }
       if (settings && settings.logstash && settings.logstash[env.code.toLowerCase()] && settings.logstash[env.code.toLowerCase()].status === 'deployed') {
-        utils.printProgress('Logstash found');
+        utils.printProgress(soajs, 'Logstash found');
         return cb(null, true);
       }
       lib.getAnalyticsContent(soajs, config, model, 'logstash', catalogDeployment, deployment, env, auto, esCluster, (err, content) => {
         if (err) {
           return cb(err);
         }
-        utils.printProgress('Deploying Logstash');
+        utils.printProgress(soajs, 'Deploying Logstash');
         const options = utils.buildDeployerOptions(env, soajs, model);
         options.params = content;
         async.parallel({
@@ -1003,7 +1003,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployFilebeat(soajs, config, deployment, env, model, auto, cb) {
-    utils.printProgress('Checking Filebeat');
+    utils.printProgress(soajs, 'Checking Filebeat');
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
@@ -1014,14 +1014,14 @@ const lib = {
         return cb(error);
       }
       if (settings && settings.filebeat && settings.filebeat[env.code.toLowerCase()] && settings.filebeat[env.code.toLowerCase()].status === 'deployed') {
-        utils.printProgress('Filebeat found');
+        utils.printProgress(soajs, 'Filebeat found');
         return cb(null, true);
       }
       lib.getAnalyticsContent(soajs, config, model, 'filebeat', null, deployment, env, null, null, (err, content) => {
         if (err) {
           return cb(err);
         }
-        utils.printProgress('Deploying Filebeat');
+        utils.printProgress(soajs, 'Deploying Filebeat');
         const options = utils.buildDeployerOptions(env, soajs, model);
         options.params = content;
         async.parallel({
@@ -1059,7 +1059,7 @@ const lib = {
     if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esCluster = auto.deployElastic;
     }
-    utils.printProgress('Checking Metricbeat');
+    utils.printProgress(soajs, 'Checking Metricbeat');
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
@@ -1070,14 +1070,14 @@ const lib = {
         return cb(error);
       }
       if (settings && settings.metricbeat && settings.metricbeat && settings.metricbeat.status === 'deployed') {
-        utils.printProgress('Metricbeat found');
+        utils.printProgress(soajs, 'Metricbeat found');
         return cb(null, true);
       }
       lib.getAnalyticsContent(soajs, config, model, 'metricbeat', catalogDeployment, deployment, env, auto, esCluster, (err, content) => {
         if (err) {
           return cb(err);
         }
-        utils.printProgress('Deploying Metricbeat');
+        utils.printProgress(soajs, 'Deploying Metricbeat');
         const options = utils.buildDeployerOptions(env, soajs, model);
         options.params = content;
         async.parallel({
@@ -1117,7 +1117,7 @@ const lib = {
     const flk = ['kibana', `${env.code.toLowerCase()}-logstash`, `${env.code.toLowerCase()}-filebeat`, 'metricbeat'];
     
     function check(cb) {
-      utils.printProgress('Finalizing', counter++);
+      utils.printProgress(soajs, 'Finalizing', counter++);
       deployer.listServices(options, (err, servicesList) => {
         if (err) {
           return cb(err);
@@ -1184,7 +1184,7 @@ const lib = {
     };
     
     function getKibanaUrl(cb) {
-      utils.printProgress('Waiting for kibana', counter++);
+      utils.printProgress(soajs, 'Waiting for kibana', counter++);
       let url;
       if (deployment && deployment.external) {
         url = `http://${process.env.CONTAINER_HOST}:32601/status`;
@@ -1207,7 +1207,7 @@ const lib = {
     
     // added check for availability of kibana
     function kibanaStatus(cb) {
-      utils.printProgress('Waiting for kibana', counter++);
+      utils.printProgress(soajs, 'Waiting for kibana', counter++);
       request(options, (error, response) => {
         if (error || !response) {
           setTimeout(() => {
@@ -1220,7 +1220,7 @@ const lib = {
     }
     
     function kibanaIndex(cb) {
-      utils.printProgress('Waiting for kibana', counter++);
+      utils.printProgress(soajs, 'Waiting for kibana', counter++);
       esClient.db.search(condition, (err, res) => {
         if (err) {
           return cb(err);

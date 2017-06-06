@@ -142,7 +142,7 @@ const script = {
         return cb(err);
       }
       const options = utils.buildDeployerOptions(env, soajs, model);
-      const activated = utils.getActivatedEnv(settings, env);
+      const activated = utils.getActivatedEnv(settings, environment);
       deactivate.deleteService(options, environment, activated, (error) => {
         if (error) {
           return cb(error);

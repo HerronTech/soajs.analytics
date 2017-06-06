@@ -2,7 +2,6 @@
 'use strict';
 const uuid = require('uuid');
 const async = require('async');
-var readline = require('readline')
 
 const config = require('../config.js');
 const colls = {
@@ -110,10 +109,21 @@ const utils = {
     });
   },
   
-  printProgress(message, counter) {
-    readline.cursorTo(process.stdout, 0);
-    process.stdout.write(showTimestamp() + ' - ' + message + ' ' + showDots() + '\r');
-    
+  printProgress(soajs, message, counter) {
+    // try {
+    //   process.stdout.clearLine();
+    //   process.stdout.write(showTimestamp() + ' - ' + message + ' ' + showDots() + '\r');
+    // }
+    // catch (e) {
+    //   try {
+    //    soajs.log.debug(message);
+    //  }
+    //  catch (c){
+    //     console.log(showTimestamp() + ' - ' + message + ' ' + showDots() + '\r')
+    //  }
+    // }
+  
+    console.log(showTimestamp() + ' - ' + message + ' ' + showDots() + '\r')
     function showDots() {
       var output = '';
       var numOfDots = counter % 5;
