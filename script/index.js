@@ -116,7 +116,7 @@ const script = {
         return null;
       }
       // close es connection
-      if (opts.soajs.inputmaskData.elasticsearch === 'local') {
+      if (opts.soajs.inputmaskData && opts.soajs.inputmaskData.elasticsearch === 'local') {
         auto.pingElasticsearch.close();
       }
       else {
