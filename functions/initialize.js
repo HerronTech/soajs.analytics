@@ -312,7 +312,6 @@ const lib = {
         soajs.inputmaskData.action = 'analytics';
         soajs.inputmaskData.env = env.code.toLowerCase();
         soajs.inputmaskData.recipe = recipe._id.toString();
-        console.log(JSON.stringify(soajs.inputmaskData, null, 2), 'soajs.inputmaskData');
         return call(null, true);
       });
     }
@@ -381,7 +380,7 @@ const lib = {
         if (deployed) {
           return cb(null, true);
         }
-        if (soajs.inputmaskData.elasticsearch === 'local') {
+        if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
           async.series({
             deploy(call) {
               deployElasticSearch(call);
@@ -484,7 +483,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   pingElasticsearch(soajs, esClient, auto, cb) {
-    if (soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = new mSoajs.es(auto.deployElastic)
     }
     utils.printProgress('Checking Elasticsearch Availability');
@@ -509,7 +508,7 @@ const lib = {
   getElasticClientNode(soajs, esClient, esCluster, auto, cb) {
     utils.printProgress('Get Elasticsearch Client node');
     let elasticAddress;
-    if (soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = auto.pingElasticsearch;
       esCluster = auto.deployElastic;
     }
@@ -571,7 +570,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   setMapping(soajs, model, esClient, auto, cb) {
-    if (soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = auto.pingElasticsearch;
     }
     utils.printProgress('Adding Mapping and templates');
@@ -656,7 +655,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   addVisualizations(soajs, deployment, esClient, env, model, auto, cb) {
-    if (soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = auto.pingElasticsearch;
     }
     utils.printProgress('dding Kibana Visualizations');
@@ -921,7 +920,6 @@ const lib = {
         }
         const options = utils.buildDeployerOptions(env, soajs, model);
         options.params = content;
-        console.log(JSON.stringify(content, null, 2));
         async.parallel({
           deploy(call) {
             deployer.deployService(options, call);
@@ -951,7 +949,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployLogstash(soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
-    if (soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esCluster = auto.deployElastic;
     }
     utils.printProgress('Checking Logstash');
@@ -975,7 +973,6 @@ const lib = {
         utils.printProgress('Deploying Logstash');
         const options = utils.buildDeployerOptions(env, soajs, model);
         options.params = content;
-        console.log(JSON.stringify(content, null, 2));
         async.parallel({
           deploy(call) {
             deployer.deployService(options, call);
@@ -1027,7 +1024,6 @@ const lib = {
         utils.printProgress('Deploying Filebeat');
         const options = utils.buildDeployerOptions(env, soajs, model);
         options.params = content;
-        console.log(JSON.stringify(content, null, 2));
         async.parallel({
           deploy(call) {
             deployer.deployService(options, call);
@@ -1060,7 +1056,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   deployMetricbeat(soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
-    if (soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esCluster = auto.deployElastic;
     }
     utils.printProgress('Checking Metricbeat');
@@ -1084,7 +1080,6 @@ const lib = {
         utils.printProgress('Deploying Metricbeat');
         const options = utils.buildDeployerOptions(env, soajs, model);
         options.params = content;
-        console.log(JSON.stringify(content, null, 2));
         async.parallel({
           deploy(call) {
             deployer.deployService(options, call);
@@ -1165,7 +1160,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   setDefaultIndex(soajs, deployment, esClient, env, model, auto, cb) {
-    if (soajs.inputmaskData.elasticsearch === 'local'){
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local'){
       esClient = auto.pingElasticsearch;
     }
     let counter = 0;
