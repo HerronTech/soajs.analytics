@@ -92,7 +92,7 @@ const utils = {
       if (envRecord.deployer.container.kubernetes[envRecord.deployer.selected.split('.')[2]].namespace.perService) {
         namespace += '-soajs-analytics-elasticsearch-service';
       }
-      es_analytics_cluster.servers[0].host += `.-service${namespace}`;
+      es_analytics_cluster.servers[0].host += `-service.${namespace}`;
     }
     dashboard.dbs.databases[es_analytics_db_name] = {
       cluster: es_analytics_cluster_name,
