@@ -330,6 +330,7 @@ const lib = {
       utils.printProgress(soajs, 'Deploying Kibana...');
       utils.getAnalyticsContent(soajs, config, model, 'kibana', catalogDeployment, deployment, env, auto, null, (err, content) => {
         console.log("---------------------")
+        console.log(err)
         console.log("---------getAnalyticsContent------------")
         console.log("---------------------")
         if (err) {
