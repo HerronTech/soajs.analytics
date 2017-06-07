@@ -329,6 +329,9 @@ const lib = {
       }
       utils.printProgress(soajs, 'Deploying Kibana...');
       utils.getAnalyticsContent(soajs, config, model, 'kibana', catalogDeployment, deployment, env, auto, null, (err, content) => {
+        console.log("---------------------")
+        console.log("---------getAnalyticsContent------------")
+        console.log("---------------------")
         if (err) {
           return cb(err);
         }
@@ -345,7 +348,12 @@ const lib = {
             combo.record = settings;
             model.saveEntry(soajs, combo, call);
           },
-        }, cb);
+        }, function(err){
+          console.log("---------------------")
+          console.log("---------parallel------------")
+          console.log("---------------------")
+          return cb(err, true)
+        });
       });
     });
   },

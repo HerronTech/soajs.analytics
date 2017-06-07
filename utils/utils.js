@@ -718,7 +718,12 @@ const utils = {
           break;
       }
       if (env.deployer.selected.split('.')[1] === 'kubernetes') {
-        soajs.inputmaskData.deployConfig.replication.mode = 'daemonset';
+        if (soajs.inputmaskData.deployConfig.replication.mode === 'replicated') {
+          soajs.inputmaskData.deployConfig.replication.mode = 'deployment';
+        }
+        else if (soajs.inputmaskData.deployConfig.replication.mode === 'global') {
+          soajs.inputmaskData.deployConfig.replication.mode = 'daemonset';
+        }
       }
       model.findEntry(soajs, combo, (err, recipe) => {
         if (err) {
