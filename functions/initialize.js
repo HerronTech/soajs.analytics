@@ -620,7 +620,7 @@ const lib = {
           return cb(err);
         }
         servicesList.forEach((oneService) => {
-          if (oneService.labels['soajs.service.name'] === 'kibana') {
+          if (oneService.labels['soajs.service.name'] === 'soajs-kibana') {
             url = `http://${oneService.name}:${kibanaPort}/status`;
           }
         });
@@ -633,6 +633,7 @@ const lib = {
       request(options, (error, response) => {
         if (error || !response) {
           setTimeout(() => {
+            console.log(error)
             kibanaStatus(cb);
           }, 3000);
         } else {
