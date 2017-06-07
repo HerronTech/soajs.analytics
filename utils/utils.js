@@ -10,6 +10,7 @@ const config = require('../config.js');
 const collections = {
   analytics: 'analytics',
   environment: 'environment',
+  catalogs: 'catlaogs'
 };
 const filebeatIndex = require('../data/indexes/filebeat-index');
 const metricbeatIndex = require('../data/indexes/metricbeat-index');
