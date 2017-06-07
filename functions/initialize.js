@@ -661,6 +661,7 @@ const lib = {
         cb(err);
       } else {
         options.url = url;
+        console.log(options, "options")
         kibanaStatus(() => {
           kibanaIndex((error, kibanaRes) => {
             if (error) {
