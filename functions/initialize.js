@@ -602,14 +602,15 @@ const lib = {
     const options = {
       method: 'GET',
     };
-    let kibanaPort = "2601";
-    if (env.deployer.selected.split('.')[1] === 'kubernetes' || (deployment && deployment.external)) {
-      kibanaPort = "32601";
+    let kibanaPort = "5601";
+    let exposedkibanaPort = "2601";
+    if (env.deployer.selected.split('.')[1] === 'kubernetes') {
+      exposedkibanaPort = "32601";
     }
     function getKibanaUrl(cb) {
       let url;
       if (deployment && deployment.external) {
-        url = `http://${process.env.CONTAINER_HOST}:${kibanaPort}/status`;
+        url = `http://${process.env.CONTAINER_HOST}:${exposedkibanaPort}/status`;
         return cb(null, url);
       }
       
@@ -679,7 +680,7 @@ const lib = {
                       kibana: {
                         version: index.id,
                         status: 'deployed',
-                        port: '2601',
+                        port: `${kibanaPort}`,
                       },
                     },
                   };

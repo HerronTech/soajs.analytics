@@ -588,6 +588,9 @@ const utils = {
           if (service === 'elastic') {
             serviceParams.ports[0].published = 30920;
           }
+          if (service === 'kibana') {
+            serviceParams.ports[0].published = 32601;
+          }
         }
         if (loadContent.deployConfig.volume) {
           if (env.deployer.selected.split('.')[1] === 'kubernetes') {

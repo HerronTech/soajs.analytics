@@ -27,7 +27,7 @@ module.exports = {
     ports: [
       {
         isPublished: true,
-        published: 32601,
+        published: 2601,
         target: 5601,
       },
     ],
