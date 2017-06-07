@@ -291,7 +291,7 @@ const lib = {
     if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
       esClient = auto.pingElasticsearch;
     }
-    utils.printProgress(soajs, 'dding Kibana Visualizations...');
+    utils.printProgress(soajs, 'Adding Kibana Visualizations...');
     const options = utils.buildDeployerOptions(env, soajs, model);
     options.params = {
       deployment
@@ -350,9 +350,6 @@ const lib = {
             model.saveEntry(soajs, combo, call);
           },
         }, function(err){
-          console.log("---------------------")
-          console.log("---------parallel------------")
-          console.log("---------------------")
           return cb(err, true)
         });
       });
@@ -605,11 +602,14 @@ const lib = {
     const options = {
       method: 'GET',
     };
-    
+    let kibanaPort = "2601";
+    if (env.deployer.selected.split('.')[1] === 'kubernetes' || (deployment && deployment.external)) {
+      kibanaPort = "32601";
+    }
     function getKibanaUrl(cb) {
       let url;
       if (deployment && deployment.external) {
-        url = `http://${process.env.CONTAINER_HOST}:32601/status`;
+        url = `http://${process.env.CONTAINER_HOST}:${kibanaPort}/status`;
         return cb(null, url);
       }
       
@@ -620,7 +620,7 @@ const lib = {
         }
         servicesList.forEach((oneService) => {
           if (oneService.labels['soajs.service.name'] === 'kibana') {
-            url = `http://${oneService.name}:5601/status`;
+            url = `http://${oneService.name}:${kibanaPort}/status`;
           }
         });
         return cb(null, url);
@@ -679,7 +679,7 @@ const lib = {
                       kibana: {
                         version: index.id,
                         status: 'deployed',
-                        port: '32601',
+                        port: '2601',
                       },
                     },
                   };
