@@ -3,6 +3,7 @@
 const uuid = require('uuid');
 const async = require('async');
 const fs = require('fs');
+const deployer = require('soajs.core.drivers');
 
 const es = require('./es');
 const config = require('../config.js');
