@@ -636,9 +636,8 @@ const utils = {
         }
         serviceParams = JSON.stringify(serviceParams);
         // add namespace
-        
         if (service === 'kibana') {
-          serviceParams = serviceParams.replace(/%elasticsearch_url%/g, `http://${auto.getElasticClientNode}`);
+          serviceParams = serviceParams.replace(/%elasticsearch_url%/g, `${esCluster.URLParam.protocol}://${auto.getElasticClientNode}`);
         }
         if (service === 'filebeat') {
           serviceParams = serviceParams.replace(/%logNameSpace%/g, logNameSpace);

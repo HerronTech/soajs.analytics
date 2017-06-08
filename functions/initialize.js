@@ -312,7 +312,10 @@ const lib = {
    * @param {object} auto: object containing tasks done
    * @param {function} cb: callback function
    */
-  deployKibana(soajs, config, catalogDeployment, deployment, env, model, auto, cb) {
+  deployKibana(soajs, config, catalogDeployment, deployment, env, model, esCluster, auto, cb) {
+    if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
+      esCluster = auto.deployElastic;
+    }
     utils.printProgress(soajs, 'Checking Kibana...');
     const combo = {};
     combo.collection = collection.analytics;
@@ -530,7 +533,6 @@ const lib = {
    */
   checkAvailability(soajs, deployment, env, model, auto, cb) {
     const options = utils.buildDeployerOptions(env, soajs, model);
-    let counter = 0;
     options.params = {
       deployment,
     };
@@ -603,14 +605,14 @@ const lib = {
       method: 'GET',
     };
     let kibanaPort = "5601";
-    let exposedkibanaPort = "2601";
-    if (env.deployer.selected.split('.')[1] === 'kubernetes') {
-      exposedkibanaPort = "32601";
+    let externalKibana = "5601";
+    if (env.deployer.selected.split('.')[1] === 'kubernetes' || (deployment && deployment.external)) {
+      kibanaPort = "32601";
     }
     function getKibanaUrl(cb) {
       let url;
       if (deployment && deployment.external) {
-        url = `http://${process.env.CONTAINER_HOST}:${exposedkibanaPort}/status`;
+        url = `http://${process.env.CONTAINER_HOST}:${externalKibana}/status`;
         return cb(null, url);
       }
       
@@ -620,8 +622,13 @@ const lib = {
           return cb(err);
         }
         servicesList.forEach((oneService) => {
-          if (oneService.labels['soajs.service.name'] === 'soajs-kibana') {
-            url = `http://${oneService.name}:${kibanaPort}/status`;
+          if (oneService.labels['soajs.service.name'] === 'kibana') {
+            if(env.deployer.selected.split('.')[1] === 'kubernetes'){
+              url = `http://${oneService.name}-service:${kibanaPort}/status`;
+            }
+           else {
+              url = `http://${oneService.name}:${kibanaPort}/status`;
+            }
           }
         });
         return cb(null, url);
@@ -633,7 +640,6 @@ const lib = {
       request(options, (error, response) => {
         if (error || !response) {
           setTimeout(() => {
-            console.log(error)
             kibanaStatus(cb);
           }, 3000);
         } else {
@@ -661,7 +667,6 @@ const lib = {
         cb(err);
       } else {
         options.url = url;
-        console.log(options, "options")
         kibanaStatus(() => {
           kibanaIndex((error, kibanaRes) => {
             if (error) {
