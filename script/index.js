@@ -122,7 +122,9 @@ const script = {
       else {
         opts.esClient.close();
       }
-      console.log('Analytics deployed');
+      if (mode === 'dashboard'){
+        opts.soajs.log.debug("Analytics deployed");
+      }
       if (mode === 'installer') {
         return cb(null, true);
       }

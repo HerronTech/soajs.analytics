@@ -601,10 +601,7 @@ const lib = {
       method: 'GET',
     };
     let kibanaPort = "5601";
-    let externalKibana = "5601";
-    if (env.deployer.selected.split('.')[1] === 'kubernetes' || (deployment && deployment.external)) {
-      kibanaPort = "32601";
-    }
+    let externalKibana = "32601";
     function getKibanaUrl(cb) {
       let url;
       if (deployment && deployment.external) {
@@ -618,7 +615,7 @@ const lib = {
           return cb(err);
         }
         servicesList.forEach((oneService) => {
-          if (oneService.labels['soajs.service.name'] === 'kibana') {
+          if (oneService.labels['soajs.service.name'] === 'soajs-kibana') {
             if(env.deployer.selected.split('.')[1] === 'kubernetes'){
               url = `http://${oneService.name}-service:${kibanaPort}/status`;
             }
