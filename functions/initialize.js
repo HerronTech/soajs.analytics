@@ -348,7 +348,7 @@ const lib = {
             combo.record = settings;
             model.saveEntry(soajs, combo, call);
           },
-        }, function(err){
+        }, function (err) {
           return cb(err, true)
         });
       });
@@ -579,6 +579,7 @@ const lib = {
    */
   setDefaultIndex(soajs, deployment, esClient, env, model, auto, cb) {
     utils.printProgress(soajs, 'Waiting for kibana...');
+    let counter = 0;
     if (soajs.inputmaskData && soajs.inputmaskData.elasticsearch === 'local') {
       esClient = auto.pingElasticsearch;
     }
@@ -602,6 +603,7 @@ const lib = {
     };
     let kibanaPort = "5601";
     let externalKibana = "32601";
+    
     function getKibanaUrl(cb) {
       let url;
       if (deployment && deployment.external) {
@@ -616,10 +618,10 @@ const lib = {
         }
         servicesList.forEach((oneService) => {
           if (oneService.labels['soajs.service.name'] === 'soajs-kibana') {
-            if(env.deployer.selected.split('.')[1] === 'kubernetes'){
+            if (env.deployer.selected.split('.')[1] === 'kubernetes') {
               url = `http://${oneService.name}-service:${kibanaPort}/status`;
             }
-           else {
+            else {
               url = `http://${oneService.name}:${kibanaPort}/status`;
             }
           }
@@ -633,9 +635,14 @@ const lib = {
       request(options, (error, response) => {
         if (error || !response) {
           setTimeout(() => {
+            if (counter > 150) { // wait 5 min
+              cb(error);
+            }
+            counter++;
             kibanaStatus(cb);
           }, 3000);
         } else {
+          counter = 0;
           return cb(null, true);
         }
       });
@@ -650,6 +657,10 @@ const lib = {
           return cb(null, res);
         }
         setTimeout(() => {
+          if (counter > 150) { // wait 5 min
+            cb(err);
+          }
+          counter++;
           kibanaIndex(cb);
         }, 500);
       });

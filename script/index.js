@@ -113,8 +113,16 @@ const script = {
         if (mode === 'installer') {
           return cb(err);
         }
+        else {
+          script.deactivateAnalytics(opts.soajs, opts.env, opts.model, function (err){
+            if(err){
+              opts.soajs.log.error(err);
+            }
+          });
+        }
         return null;
       }
+      
       // close es connection
       if (opts.soajs.inputmaskData && opts.soajs.inputmaskData.elasticsearch === 'local') {
         auto.pingElasticsearch.close();
