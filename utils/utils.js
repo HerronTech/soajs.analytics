@@ -106,7 +106,7 @@ const utils = {
       updateDashboard(call) {
         const comboD = {};
         comboD.collection = collections.environment;
-        comboD.record = envRecord;
+        comboD.record = dashboard;
         model.saveEntry(soajs, comboD, call);
       },
       updateSettings(call) {
