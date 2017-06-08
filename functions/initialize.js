@@ -680,7 +680,7 @@ const lib = {
                       kibana: {
                         version: index.id,
                         status: 'deployed',
-                        port: `${kibanaPort}`,
+                        port: `${externalKibana}`,
                       },
                     },
                   };
