@@ -697,7 +697,7 @@ const utils = {
             name: 'soajs-kibana',
             allEnv: true,
             env: {
-              ELASTICSEARCH_URL: `http://${auto.getElasticClientNode}`,
+              ELASTICSEARCH_URL: `${esCluster.URLParam.protocol}://${auto.getElasticClientNode}`,
             },
           };
           soajs.inputmaskData.deployConfig = {
