@@ -333,11 +333,12 @@ const utils = {
                 }
                 
                 if (oneService.tasks.length > 0) {
-                  async.forEachOf(oneService.tasks, (oneTask, key, call) => {
+                  let taskNumber =0;
+                  async.eachSeries(oneService.tasks, (oneTask, call) => {
                     if (oneTask.status && oneTask.status.state && oneTask.status.state === 'running') {
                       taskName = oneTask.name;
                       taskName = taskName.replace(/[\/*?"<>|,.-]/g, '_');
-                      if (key === 0) {
+                      if (taskNumber === 0) {
                         // filebeat-service-environment-*
                         analyticsArray = analyticsArray.concat(
                           [
@@ -357,7 +358,7 @@ const utils = {
                           ]
                         );
                       }
-                      
+                      taskNumber++;
                       const options = {
                           
                           $and: [
