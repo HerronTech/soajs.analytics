@@ -297,6 +297,7 @@ const lib = {
       deployment
     };
     deployer.listServices(options, (err, servicesList) => {
+      console.log(JSON.stringify(servicesList, null, 2))
       utils.configureKibana(soajs, servicesList, esClient, env, model, cb);
     });
   },
