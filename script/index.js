@@ -1,5 +1,6 @@
 /* jshint esversion: 6 */
 'use strict';
+const soajs = require('soajs');
 const async = require('async');
 const step = require('../functions/initialize.js');
 const deactivate = require('../functions/deactivate.js');
@@ -10,7 +11,9 @@ const collection = {
 
 let tracker = {};
 const script = {
-  checkAnalytics(settings, env, cb) {
+  checkAnalytics(opts, cb) {
+    const settings = opts.settings;
+    const env = opts.env;
     const date = new Date().getTime();
     const data = {};
     // return tracker ready
@@ -24,7 +27,7 @@ const script = {
           info: {
             status: 'ready',
             ts: date,
-          },
+          }
         };
         data[env] = true;
         data.tracker = tracker[env];
@@ -50,11 +53,14 @@ const script = {
     return cb(null, data);
   },
   
-  initialize(opts, mode, cb) {
+  initialize(opts, cb) {
     const data = {};
     const date = new Date().getTime();
-    const env = opts.envRecord.code.toLowerCase();
-    if (mode === 'dashboard' && opts.settings && opts.settings.env && opts.settings.env[env]) {
+    const mode = opts.mode;
+    const env = opts.envRecord.environment.toLowerCase();
+    
+    if (mode === 'dashboard' && opts.analyticsSettings
+      && opts.analyticsSettings.env && opts.analyticsSettings.env[env]) {
       tracker[env] = {
         info: {
           status: 'ready',
@@ -64,7 +70,11 @@ const script = {
       data[env] = true;
       data.tracker = tracker[env];
       return cb(null, data);
-    } else if (mode === 'dashboard' && tracker[env] && tracker[env].info && tracker[env].info.status && tracker[env].info.status === 'started') {
+    }
+    
+    else if (mode === 'dashboard' && tracker[env]
+      && tracker[env].info && tracker[env].info.status
+      && tracker[env].info.status === 'started') {
       data.tracker = tracker[env] || {};
       data[env] = false;
       return cb(null, data);
@@ -76,7 +86,6 @@ const script = {
         ts: date,
       },
     };
-    
     function returnTracker() {
       if (mode === 'dashboard') {
         tracker[env] = {
@@ -92,51 +101,94 @@ const script = {
     }
     
     returnTracker();
+    const workFlowMethods = ["insertMongoData", "deployElastic", "pingElasticsearch", "getElasticClientNode",
+      "setMapping", "addVisualizations", "deployKibana", "deployLogstash", "deployLogstash", "deployFilebeat",
+      "deployMetricbeat", "checkAvailability", "setDefaultIndex"];
+    let operations = [];
+    utils.setEsCluster(opts, (errC, esConfig) => {
+      if (errC) {
+        tracker[env] = {
+          "info": {
+            "status": "failed",
+            "date": new Date().getTime()
+          }
+        };
+        return cb(errC);
+      }
+      tracker[env].counterPing = 0;
+      tracker[env].counterInfo = 0;
+      tracker[env].counterAvailability = 0;
+      tracker[env].counterKibana = 0;
+      opts.tracker = tracker;
+      opts.esClient = new soajs.es(esConfig.esCluster);
+      opts.esDbInfo = {
+        esDbName: esConfig.esDbName,
+        esClusterName: esConfig.esClusterName,
+        esCluster: esConfig.esCluster
+      };
     
-    const operations = {
-      insertMongoData: async.apply(step.insertMongoData, opts.soajs, opts.model),
-      deployElastic: ['insertMongoData', async.apply(step.deployElastic, opts.soajs, opts.config, mode, opts.deployment, opts.envRecord, opts.dashboard, opts.settings, opts.model)],
-      pingElasticsearch: ['deployElastic', async.apply(step.pingElasticsearch, opts.soajs, opts.esClient)],
-      getElasticClientNode: ['pingElasticsearch', async.apply(step.getElasticClientNode, opts.soajs, opts.esClient, opts.esCluster)],
-      setMapping: ['getElasticClientNode', async.apply(step.setMapping, opts.soajs, opts.model, opts.esClient)],
-      addVisualizations: ['setMapping', async.apply(step.addVisualizations, opts.soajs, opts.deployment, opts.esClient, opts.envRecord, opts.model)],
-      deployKibana: ['addVisualizations', async.apply(step.deployKibana, opts.soajs, opts.config, opts.catalogDeployment, opts.deployment, opts.envRecord, opts.model, opts.esCluster)],
-      deployLogstash: ['deployKibana', async.apply(step.deployLogstash, opts.soajs, opts.config, opts.catalogDeployment, opts.deployment, opts.envRecord, opts.model, opts.esCluster)],
-      deployFilebeat: ['deployLogstash', async.apply(step.deployFilebeat, opts.soajs, opts.config, opts.deployment, opts.envRecord, opts.model)],
-      deployMetricbeat: ['deployFilebeat', async.apply(step.deployMetricbeat, opts.soajs, opts.config, opts.catalogDeployment, opts.deployment, opts.envRecord, opts.model, opts.esCluster)],
-      checkAvailability: ['deployMetricbeat', async.apply(step.checkAvailability, opts.soajs, opts.deployment, opts.envRecord, opts.model)],
-      setDefaultIndex: ['checkAvailability', async.apply(step.setDefaultIndex, opts.soajs, opts.deployment, opts.esClient, opts.envRecord, opts.model)],
-    };
-    
-    async.auto(operations, (err, auto) => {
-      if (err) {
-        if (mode === 'installer') {
-          return cb(err);
-        }
-        else {
-          script.deactivateAnalytics(opts.soajs, opts.env, opts.model, function (err){
-            if(err){
-              opts.soajs.log.error(err);
-            }
-          });
-        }
-        return null;
-      }
-      
-      // close es connection
-      if (opts.soajs.inputmaskData && opts.soajs.inputmaskData.elasticsearch === 'local') {
-        auto.pingElasticsearch.close();
-      }
-      else {
-        opts.esClient.close();
-      }
-      if (mode === 'dashboard'){
-        opts.soajs.log.debug("Analytics deployed");
-      }
-      if (mode === 'installer') {
-        return cb(null, true);
-      }
-      return null;
+      async.eachSeries(workFlowMethods, (methodName, cb) => {
+        operations.push(async.apply(step[methodName], opts));
+        return cb();
+      }, () => {
+        async.series(operations, (err) => {
+          if (err){
+            console.log("err: ", err)
+            tracker[env] = {
+              "info": {
+                "status": "failed",
+                "date": new Date().getTime()
+              }
+            };
+          }
+          tracker =  opts.tracker;
+          if (mode === 'installer') {
+            opts.esClient.close();
+            return cb(err);
+          }
+          //todo check if this is needed
+          // else {
+          //   script.deactivateAnalytics(opts.soajs, opts.env, opts.model, function (err) {
+          //     if (err) {
+          //       opts.soajs.log.error(err);
+          //     }
+          //   });
+          // }
+          else {
+            opts.esClient.close();
+          }
+          if (mode === 'dashboard') {
+            opts.soajs.log.debug("Analytics deployed");
+          }
+        });
+      });
+      // async.auto(operations, (err, auto) => {
+      //   if (err) {
+      //
+      //   }
+      //   //todo check if this is needed
+      //   else {
+      //     script.deactivateAnalytics(opts.soajs, opts.env, opts.model, function (err) {
+      //       if (err) {
+      //         opts.soajs.log.error(err);
+      //       }
+      //     });
+      //   }
+      //   // close es connection
+      //   if (opts.soajs.inputmaskData && opts.soajs.inputmaskData.elasticsearch === 'local') {
+      //     auto.pingElasticsearch.close();
+      //   }
+      //   else {
+      //     opts.esClient.close();
+      //   }
+      //   if (mode === 'dashboard') {
+      //     opts.soajs.log.debug("Analytics deployed");
+      //   }
+      //   if (mode === 'installer') {
+      //     return cb(null, true);
+      //   }
+      //   return null;
+      // });
     });
   },
   
@@ -194,24 +246,7 @@ const script = {
         });
       });
     });
-  },
-  
-  deployElastic(opts, mode, cb) {
-    async.parallel({
-      deploy(call) {
-        step.deployElastic(opts.soajs, opts.config, mode, opts.dashboard, opts.envRecord, opts.model, null, call);
-      },
-      updateDb(call) {
-        utils.addEsClusterToDashboard(opts.soajs, opts.model, opts.dashboard, opts.envRecord, opts.settings, call);
-      },
-    }, (err, response) => {
-      if (err) {
-        return cb(err);
-      }
-      opts.soajs.log.warn('ELasticsearch has been deployed...');
-      return cb(null, response);
-    });
-  },
+  }
   
 };
 

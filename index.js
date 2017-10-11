@@ -5,10 +5,10 @@ const script = require('./script/index.js');
 
 module.exports = {
   checkAnalytics(opts, cb) {
-    script.checkAnalytics(opts.settings, opts.env, cb);
+    script.checkAnalytics(opts, cb);
   },
 
-  activateAnalytics(opts, mode, cb) {
+  activateAnalytics(opts, cb) {
     if (!opts.model) {
       opts.model = model;
     }
@@ -23,7 +23,7 @@ module.exports = {
     if (!opts.catalogDeployment) {
       opts.catalogDeployment = {};
     }
-    script.initialize(opts, mode, (err) => {
+    script.initialize(opts, (err) => {
       if (cb && typeof cb === 'function') {
         if (err) {
           return cb(err);
@@ -36,12 +36,5 @@ module.exports = {
 
   deactivateAnalytics(opts, cb) {
     script.deactivate(opts.soajs, opts.envRecord, opts.model, cb);
-  },
-
-  deployElastic(opts, mode, cb) {
-    if (!opts.catalogDeployment) {
-      opts.catalogDeployment = {};
-    }
-    script.deployElastic(opts, mode, cb);
-  },
+  }
 };
