@@ -1151,7 +1151,7 @@ const utils = {
     
     function fillCatalogOpts(soajs, model, call) {
       const combo = {};
-      const env = soajs.envCode.environment.toLowerCase();
+      const env = opts.envCode.environment.toLowerCase();
       combo.collection = collections.catalogs;
       combo.conditions = {
         type: 'system',
