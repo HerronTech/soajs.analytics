@@ -1151,7 +1151,6 @@ const utils = {
     
     function fillCatalogOpts(soajs, model, call) {
       const combo = {};
-      const env = opts.envCode.environment.toLowerCase();
       combo.collection = collections.catalogs;
       combo.conditions = {
         type: 'system',
@@ -1167,7 +1166,7 @@ const utils = {
           combo.conditions.name = 'Logstash Recipe';
           combo.conditions.subtype = 'logstash';
           soajs.inputmaskData.custom = {
-            name: `${env}-logstash`
+            name: `${env.environment.toLowerCase()}-logstash`
           };
           soajs.inputmaskData.deployConfig = {
             replication: {
