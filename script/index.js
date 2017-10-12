@@ -105,7 +105,7 @@ const script = {
       "setMapping", "addVisualizations", "deployKibana", "deployLogstash", "deployLogstash", "deployFilebeat",
       "deployMetricbeat", "checkAvailability", "setDefaultIndex"];
     let operations = [];
-    utils.setEsCluster(opts, (errC, esConfig) => {
+    utils.setEsCluster(opts, (errC) => {
       if (errC) {
         tracker[env] = {
           "info": {
@@ -120,12 +120,7 @@ const script = {
       tracker[env].counterAvailability = 0;
       tracker[env].counterKibana = 0;
       opts.tracker = tracker;
-      opts.esClient = new soajs.es(esConfig.esCluster);
-      opts.esDbInfo = {
-        esDbName: esConfig.esDbName,
-        esClusterName: esConfig.esClusterName,
-        esCluster: esConfig.esCluster
-      };
+      opts.esClient = new soajs.es(opts.esDbInfo.esCluster);
     
       async.eachSeries(workFlowMethods, (methodName, cb) => {
         operations.push(async.apply(step[methodName], opts));

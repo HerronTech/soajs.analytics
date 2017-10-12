@@ -305,11 +305,18 @@ const utils = {
         
       }
     }, (error) => {
-      return cb(error, {
+      if (!process.env.SOAJS_INSTALL_DEBUG) {
+        es_analytics_cluster.extraParam.log = [{
+          type: 'stdio',
+          levels: [] // remove the logs
+        }];
+      }
+      opts.esDbInfo = {
         esDbName: es_analytics_db,
         esClusterName: es_analytics_cluster_name,
         esCluster: es_analytics_cluster
-      });
+      };
+      return cb(error, true);
     });
   },
   
