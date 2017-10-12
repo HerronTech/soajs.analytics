@@ -170,13 +170,13 @@ const utils = {
           soajs.log.debug("found existing ES settings ...");
           es_analytics_db = settings.elasticsearch.db_name;
           //get cluster from environment using db name
-          getEsDb(cb);
+          getEsDb(mCb);
           
         }
         else if (es_dbName) {
           soajs.log.debug("Elasticsearch db name was provided ...");
           es_analytics_db = es_dbName;
-          getEsDb(cb);
+          getEsDb(mCb);
         }
         //if no db name provided create one
         else {
