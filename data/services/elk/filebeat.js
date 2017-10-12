@@ -8,13 +8,14 @@ module.exports = {
     'SOAJS_LOGSTASH_PORT=12201',
   ],
   labels: {
-    'soajs.content': 'true',
-    'soajs.service.name': '%env%-filebeat',
-    'soajs.service.group': 'elk',
-    'soajs.service.label': '%env%-filebeat',
-    'soajs.env.code': '%env%',
-    'soajs.service.type': 'elk',
-    'soajs.service.mode': 'global',
+    "soajs.content": "true",
+    "soajs.service.name": "%env%-filebeat",
+    "soajs.service.type": "system",
+    "soajs.service.subtype": "filebeat",
+    "soajs.service.group": "soajs-analytics",
+    "soajs.service.label": "%env%-filebeat",
+    "soajs.env.code": "%env%",
+    "soajs.service.mode": "global"
   },
   command: {
     cmd: ['bash'],

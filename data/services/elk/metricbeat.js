@@ -7,12 +7,13 @@ module.exports = {
     // 'ELASTICSEARCH_URL=%elasticsearch_url%'
   ],
   labels: {
-    'soajs.content': 'true',
-    'soajs.service.type': 'elk',
-    'soajs.service.name': 'soajs-metricbeat',
-    'soajs.service.group': 'elk',
-    'soajs.service.label': 'soajs-metricbeat',
-    'soajs.service.mode': 'global',
+    "soajs.content": "true",
+    "soajs.service.type": "system",
+    "soajs.service.subtype": "metricbeat",
+    "soajs.service.name": "soajs-metricbeat",
+    "soajs.service.group": "soajs-analytics",
+    "soajs.service.label": "soajs-metricbeat",
+    "soajs.service.mode": "global"
   },
   command: {
     cmd: ['sh'],

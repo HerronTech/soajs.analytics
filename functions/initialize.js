@@ -72,29 +72,29 @@ const lib = {
         const recipeCondition = {
           "collection": collection.catalogs,
           "conditions": {
-            "$and" : [
-              {
-                "$or": [
-                  {
-                    "name": "Kibana Recipe",
-                    "subType": "kibana",
-                  },
-                  {
-                    "name": "Logstash Recipe",
-                    "subType": "logstash"
-                  },
-                  {
-                    "name": "Metricbeat Recipe",
-                    "subType": "metricbeat"
-                  }
-                ]
-              },
-              {
-                "type": "system",
-                "locked": true
-              }
-            ]
-          },
+          "$and" : [
+            {
+              "$or": [
+                {
+                  "name": "Kibana Recipe",
+                  "subtype": "kibana",
+                },
+                {
+                  "name": "Logstash Recipe",
+                  "subtype": "logstash"
+                },
+                {
+                  "name": "Metricbeat Recipe",
+                  "subtype": "metricbeat"
+                }
+              ]
+            },
+            {
+              "type": "system",
+              "locked": true
+            }
+          ]
+        },
           "fields": {
             "name": 1
           }
@@ -106,15 +106,18 @@ const lib = {
           const recipesNames = ["Kibana Recipe", "Logstash Recipe", "Metricbeat Recipe"];
           if (result.length !== 3){
             let resultNames = [];
-            let final = recipes;
+            let final = recipesNames;
             if (result.length > 0){
               resultNames = result.map(x => (x.name ? x.name : null));
               final = _.difference (recipesNames, resultNames);
             }
             recipeCondition.record = recipes.filter(oneRecipe => {
-              return (final.indexOf(oneRecipe) !== -1);
+              return (final.indexOf(oneRecipe.name) !== -1);
             });
             model.insertEntry(soajs, recipeCondition, callback);
+          }
+          else {
+            callback(null, true);
           }
         });
       }
@@ -337,6 +340,8 @@ const lib = {
       }
       const options = utils.buildDeployerOptions(env, model);
       options.params = content;
+      
+      console.log(JSON.stringify(content, null, 2))
       async.parallel({
         deploy(call) {
           deployer.deployService(options, call);
@@ -379,6 +384,7 @@ const lib = {
       if (err) {
         return cb(err);
       }
+      console.log(JSON.stringify(content, null, 2))
       utils.printProgress(soajs, 'Deploying Logstash...');
       const options = utils.buildDeployerOptions(env, model);
       options.params = content;
@@ -426,6 +432,7 @@ const lib = {
       if (err) {
         return cb(err);
       }
+      console.log(JSON.stringify(content, null, 2))
       utils.printProgress(soajs, 'Deploying Filebeat...');
       const options = utils.buildDeployerOptions(env, model);
       options.params = content;
@@ -475,6 +482,7 @@ const lib = {
       if (err) {
         return cb(err);
       }
+      console.log(JSON.stringify(content, null, 2))
       utils.printProgress(soajs, 'Deploying Metricbeat...');
       const options = utils.buildDeployerOptions(env, model);
       options.params = content;
@@ -621,7 +629,6 @@ const lib = {
     
     // added check for availability of kibana
     function kibanaStatus(cb) {
-     
       request(options, (error, response) => {
         if (error || !response) {
           console.log("error", error);
@@ -641,19 +648,22 @@ const lib = {
     
     function kibanaIndex(cb) {
       esClient.db.search(condition, (err, res) => {
-        if (err) {
+        if (err || !res) {
+          setTimeout(() => {
+            if (counter > 150) { // wait 5 min
+              cb(err);
+            }
+            counter++;
+            kibanaIndex(cb);
+          }, 500);
           return cb(err);
         }
-        if (res && res.hits && res.hits.hits && res.hits.hits.length > 0) {
+        else if (res && res.hits && res.hits.hits && res.hits.hits.length > 0) {
           return cb(null, res);
         }
-        setTimeout(() => {
-          if (counter > 150) { // wait 5 min
-            cb(err);
-          }
-          counter++;
-          kibanaIndex(cb);
-        }, 500);
+        else {
+          return cb("kibana index empty!");
+        }
       });
     }
     

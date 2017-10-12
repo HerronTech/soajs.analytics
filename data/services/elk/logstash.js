@@ -7,13 +7,14 @@ module.exports = {
     // 'ELASTICSEARCH_URL=%elasticsearch_url%'
   ],
   labels: {
-    'soajs.content': 'true',
-    'soajs.env.code': '%env%',
-    'soajs.service.type': 'elk',
-    'soajs.service.name': '%env%-logstash',
-    'soajs.service.group': 'elk',
-    'soajs.service.label': '%env%-logstash',
-    'soajs.service.mode': 'replicated',
+    "soajs.content": "true",
+    "soajs.env.code": "%env%",
+    "soajs.service.type": "system",
+    "soajs.service.subtype": "logstash",
+    "soajs.service.name": "%env%-logstash",
+    "soajs.service.group": "soajs-analytics",
+    "soajs.service.label": "%env%-logstash",
+    "soajs.service.mode": "replicated"
   },
   command: {
     cmd: ['bash'],

@@ -15,12 +15,13 @@ module.exports = {
   name: 'soajs-analytics-elasticsearch',
   variables: [],
   labels: {
-    'soajs.content': 'true',
-    'soajs.service.type': 'elk',
-    'soajs.service.name': 'soajs-analytics-elasticsearch',
-    'soajs.service.group': 'elk',
-    'soajs.service.label': 'soajs-analytics-elasticsearch',
-    'soajs.service.mode': 'replicated',
+    "soajs.content": "true",
+    "soajs.service.type": "cluster",
+    "soajs.service.subtype": "elasticsearch",
+    "soajs.service.name": "soajs-analytics-elasticsearch",
+    "soajs.service.group": "soajs-analytics",
+    "soajs.service.label": "soajs-analytics-elasticsearch",
+    "soajs.service.mode": "replicated"
   },
   deployConfig: {
     image: 'elasticsearch:alpine',
@@ -30,7 +31,7 @@ module.exports = {
       {
         isPublished: true,
         published: 9200,
-        target: 9200,
+        target: 30920,
       },
     ],
     annotations: {

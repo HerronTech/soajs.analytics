@@ -7,12 +7,13 @@ module.exports = {
     'ELASTICSEARCH_URL=%elasticsearch_url%', // add support for kubernetes (add namespace)
   ],
   labels: {
-    'soajs.content': 'true',
-    'soajs.service.name': 'soajs-kibana',
-    'soajs.service.group': 'elk',
-    'soajs.service.type': 'elk',
-    'soajs.service.label': 'soajs-kibana',
-    'soajs.service.mode': 'replicated',
+    "soajs.content": "true",
+    "soajs.service.name": "kibana",
+    "soajs.service.type": "system",
+    "soajs.service.subtype": "kibana",
+    "soajs.service.group": "soajs-analytics",
+    "soajs.service.label": "kibana",
+    "soajs.service.mode": "replicated"
   },
   command: {
     cmd: ['bash'],
@@ -28,7 +29,7 @@ module.exports = {
       {
         isPublished: true,
         published: 32601,
-        target: 5601,
+        target: 32601,
       },
     ],
     replication: {

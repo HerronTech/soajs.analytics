@@ -748,11 +748,11 @@ const utils = {
     model.findEntries(soajs, combo, (error, mappings) => {
       if (error) return cb(error);
       let mapping = {
-        index: '.kibana',
+        index: '.soajs-kibana',
         body: mappings._json
       };
       
-      esClient.db.indices.exists({index: '.kibana'}, (error, result) => {
+      esClient.db.indices.exists({index: '.soajs-kibana'}, (error, result) => {
         if (error || !result) {
           esClient.db.indices.create(mapping, (err) => {
             return cb(err, true);
@@ -813,7 +813,7 @@ const utils = {
                           [
                             {
                               index: {
-                                _index: '.kibana',
+                                _index: '.soajs-kibana',
                                 _type: 'index-pattern',
                                 _id: `filebeat-${serviceName}-${serviceEnv}-` + '*',
                               },
@@ -908,7 +908,7 @@ const utils = {
             [
               {
                 index: {
-                  _index: '.kibana',
+                  _index: '.soajs-kibana',
                   _type: 'index-pattern',
                   _id: 'metricbeat-*'
                 }
@@ -925,7 +925,7 @@ const utils = {
             [
               {
                 index: {
-                  _index: '.kibana',
+                  _index: '.soajs-kibana',
                   _type: 'index-pattern',
                   _id: `filebeat-*-${serviceEnv}-*`,
                 },
@@ -955,7 +955,7 @@ const utils = {
                 onRecord = JSON.parse(onRecord);
                 const recordIndex = {
                   index: {
-                    _index: '.kibana',
+                    _index: '.soajs-kibana',
                     _type: onRecord._type,
                     _id: onRecord.id
                   }
@@ -1069,9 +1069,7 @@ const utils = {
             logNameSpace += `-${env.environment.toLowerCase()}-logstash-service`;
           }
           // change published port name
-          if (service === 'elastic') {
-            serviceParams.ports[0].published = 30920;
-          }
+         
           if (service === 'kibana') {
             serviceParams.ports[0].published = 32601;
           }
@@ -1153,6 +1151,7 @@ const utils = {
     
     function fillCatalogOpts(soajs, model, call) {
       const combo = {};
+      const env = soajs.envCode.environment.toLowerCase();
       combo.collection = collections.catalogs;
       combo.conditions = {
         type: 'system',
@@ -1168,7 +1167,7 @@ const utils = {
           combo.conditions.name = 'Logstash Recipe';
           combo.conditions.subtype = 'logstash';
           soajs.inputmaskData.custom = {
-            name: 'soajs-logstash'
+            name: `${env}-logstash`
           };
           soajs.inputmaskData.deployConfig = {
             replication: {
