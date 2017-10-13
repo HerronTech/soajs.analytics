@@ -153,7 +153,7 @@ const script = {
             opts.esClient.close();
           }
           if (mode === 'dashboard') {
-            opts.soajs.log.debug("Analytics deployed");
+            opts.utils.printProgress(soajs, "Analytics deployed");
           }
         });
       });

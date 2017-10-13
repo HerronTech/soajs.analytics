@@ -167,20 +167,20 @@ const utils = {
       "checkSettings": (mCb) => {
         if (settings && settings.elasticsearch
           && settings.elasticsearch.db_name && settings.elasticsearch.db_name !== '') {
-          soajs.log.debug("found existing ES settings ...");
+          utils.printProgress(soajs, "found existing ES settings ...");
           es_analytics_db = settings.elasticsearch.db_name;
           //get cluster from environment using db name
           getEsDb(mCb);
           
         }
         else if (es_dbName) {
-          soajs.log.debug("Elasticsearch db name was provided ...");
+          utils.printProgress(soajs, "Elasticsearch db name was provided ...");
           es_analytics_db = es_dbName;
           getEsDb(mCb);
         }
         //if no db name provided create one
         else {
-          soajs.log.debug("Generating new ES db and cluster information...");
+          utils.printProgress(soajs, "Generating new ES db and cluster information...");
           es_analytics_db = "es_analytics_db_" + uid;
           es_analytics_cluster_name = "es_analytics_cluster_" + uid;
           utils.createNewESDB(soajs, {
@@ -194,7 +194,7 @@ const utils = {
         if (es_env) {
           //new style registry
           if (soajsRegistry.resources) {
-            soajs.log.debug("checking resources ....");
+            utils.printProgress(soajs, "checking resources ....");
             for (let resourceName in soajsRegistry.resources.cluster) {
               let tmpCluster = soajsRegistry.resources.cluster[resourceName];
               if (tmpCluster.locked && tmpCluster.shared && tmpCluster.category === 'elasticsearch'
@@ -204,7 +204,7 @@ const utils = {
             }
           }
           else {
-            soajs.log.debug("checking old style configuration....");
+            utils.printProgress(soajs, "checking old style configuration....");
             es_analytics_cluster = es_env.dbs.clusters[es_analytics_cluster_name];
             removeOptions = {_id: es_env._id, name: es_analytics_cluster_name};
           }
@@ -214,7 +214,7 @@ const utils = {
           }
         }
         else {
-          soajs.log.debug("no cluster found, generating new configuration...");
+          utils.printProgress(soajs, "no cluster found, generating new configuration...");
           es_analytics_cluster = config.elasticsearch.cluster;
           if (soajsRegistry.deployer.selected.split('.')[1] === "kubernetes") {
             //added support for namespace and perService
@@ -511,7 +511,7 @@ const utils = {
       if (error) {
         // soajs.log.error(error);
         tracker[env.environment.toLowerCase()].counterPing++;
-        soajs.log.debug("Waiting for ES Cluster to reply, attempt:", tracker[env.environment.toLowerCase()].counterPing, "/", 10);
+        utils.printProgress(soajs, "Waiting for ES Cluster to reply, attempt:", tracker[env.environment.toLowerCase()].counterPing, "/", 10);
         if (tracker[env.environment.toLowerCase()].counterPing >= 10) { // wait 5 min
           soajs.log.error("Elasticsearch wasn't deployed... exiting");
           
@@ -612,7 +612,7 @@ const utils = {
       if (error) {
         // soajs.log.error(error);
         tracker[env.environment.toLowerCase()].counterInfo++;
-        soajs.log.debug("ES cluster found but not ready, Trying again:", tracker[env.environment.toLowerCase()].counterInfo, "/", 15);
+        utils.printProgress(soajs, "ES cluster found but not ready, Trying again:", tracker[env.environment.toLowerCase()].counterInfo, "/", 15);
         if (tracker[env.environment.toLowerCase()].counterInfo >= 15) { // wait 5 min
           soajs.log.error("Elasticsearch wasn't deployed correctly ... exiting");
           
@@ -689,7 +689,7 @@ const utils = {
       //purge not reguired
       return cb(null, true);
     }
-    soajs.log.debug("Purging data...");
+    utils.printProgress(soajs, "Purging data...");
     esClient.db.indices.delete({index: 'filebeat-*'}, (filebeatError) => {
       if (filebeatError) {
         return cb(filebeatError);
