@@ -19,7 +19,7 @@ const lib = {
       async.eachSeries(services, (oneService, callback) => {
         // add check if another environment have analytics activated
         // if activated do not remove kibana or metricbeat
-        if (oneService.labels['soajs.service.type'] === 'elk'
+        if (oneService.labels['soajs.service.group'] === 'soajs-analytics'
           && oneService.labels['soajs.service.name'] !== 'soajs-analytics-elasticsearch') {
           if (activated && ((oneService.labels['soajs.service.name'] === 'soajs-metricbeat') ||
             oneService.labels['soajs.service.name'] === 'soajs-kibana')) {

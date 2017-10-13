@@ -215,6 +215,9 @@ const utils = {
         else {
           utils.printProgress(soajs, "no cluster found, generating new configuration...");
           es_analytics_cluster = config.elasticsearch.cluster;
+          if (opts.credentials && opts.credentials.username && opts.credentials.password) {
+            es_analytics_cluster.credentials = opts.credentials;
+          }
           if (soajsRegistry.deployer.selected.split('.')[1] === "kubernetes") {
             //added support for namespace and perService
             let namespace = soajsRegistry.deployer.container["kubernetes"][soajsRegistry.deployer.selected.split('.')[2]].namespace.default;

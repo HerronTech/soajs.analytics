@@ -24,7 +24,7 @@ module.exports = {
     "soajs.service.mode": "replicated"
   },
   deployConfig: {
-    image: 'elasticsearch:alpine',
+    image: 'soajstest/elasticsearch',
     memoryLimit: 2000000000,
     network: 'soajsnet',
     ports: [

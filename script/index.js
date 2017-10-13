@@ -187,18 +187,21 @@ const script = {
     });
   },
   
-  deactivate(soajs, env, model, cb) {
+  deactivate(opts, cb) {
+    const soajs = opts.soajs;
+    const env = opts.soajs.registry;
+    const model = opts.model;
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
       _type: 'settings',
     };
-    const environment = env.code.toLowerCase();
+    const environment = env.environment.toLowerCase();
     model.findEntry(soajs, combo, (err, settings) => {
       if (err) {
         return cb(err);
       }
-      const options = utils.buildDeployerOptions(env, soajs, model);
+      const options = utils.buildDeployerOptions(env, model);
       const activated = utils.getActivatedEnv(settings, environment);
       deactivate.deleteService(options, environment, activated, (error) => {
         if (error) {

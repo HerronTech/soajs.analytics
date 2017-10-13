@@ -35,6 +35,6 @@ module.exports = {
   },
 
   deactivateAnalytics(opts, cb) {
-    script.deactivate(opts.soajs, opts.envRecord, opts.model, cb);
+    script.deactivate(opts, cb);
   }
 };
