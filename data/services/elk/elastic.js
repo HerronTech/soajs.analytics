@@ -23,9 +23,14 @@ module.exports = {
     "soajs.service.label": "soajs-analytics-elasticsearch",
     "soajs.service.mode": "replicated"
   },
+  command: {
+    cmd: ['bash'],
+    args: ['-c', 'node index.js -T elasticsearch'],
+  },
   deployConfig: {
     image: 'soajstest/elasticsearch',
     memoryLimit: 2000000000,
+    workDir: '/opt/soajs/deployer',
     network: 'soajsnet',
     ports: [
       {
