@@ -505,12 +505,12 @@ const lib = {
    * @param {object} context: object
    * @param {function} cb: callback function
    */
-  checkAvailability(context, cb) {
-    let soajs = context.soajs;
-    let env = context.soajs.registry;
-    let deployment = context.deployment;
-    let model = context.model;
-    let tracker = context.tracker;
+  checkAvailability(opts, cb) {
+    let soajs = opt.soajs;
+    let env = opts.soajs.registry;
+    let deployment = opts.deployment;
+    let model = opts.model;
+    let tracker = opts.tracker;
     const options = utils.buildDeployerOptions(env, model);
     options.params = {
       deployment,
@@ -550,7 +550,7 @@ const lib = {
           }
           else {
             setTimeout(() => {
-              return lib.checkAvailability(context, cb);
+              return lib.checkAvailability(opts, cb);
             }, 1000);
           }
         } else {
