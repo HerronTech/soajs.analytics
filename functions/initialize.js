@@ -507,7 +507,7 @@ const lib = {
    */
   checkAvailability(context, cb) {
     let soajs = context.soajs;
-    let env = context.envRecord;
+    let env = context.soajs.registry;
     let deployment = context.deployment;
     let model = context.model;
     let tracker = context.tracker;
