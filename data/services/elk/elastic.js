@@ -35,8 +35,8 @@ module.exports = {
     ports: [
       {
         isPublished: true,
-        published: 9200,
-        target: 30920,
+        published: 30920,
+        target: 9200,
       },
     ],
     annotations: {
