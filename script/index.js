@@ -57,7 +57,7 @@ const script = {
     const data = {};
     const date = new Date().getTime();
     const mode = opts.mode;
-    const env = opts.envRecord.environment.toLowerCase();
+    const env = opts.soajs.registry.environment.toLowerCase();
     
     if (mode === 'dashboard' && opts.analyticsSettings
       && opts.analyticsSettings.env && opts.analyticsSettings.env[env]) {

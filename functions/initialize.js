@@ -133,7 +133,7 @@ const lib = {
     const soajs = opts.soajs;
     const config = opts.config;
     const mode = opts.mode;
-    const env = opts.envRecord;
+    const env = opts.soajs.registry;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
     utils.printProgress(soajs, 'Deploying Elasticsearch...');
@@ -299,7 +299,7 @@ const lib = {
   addVisualizations(opts, cb) {
     const soajs = opts.soajs;
     const deployment = opts.deployment;
-    const env = opts.envRecord;
+    const env = opts.soajs.registry;
     const model = opts.model;
     utils.printProgress(soajs, 'Adding Kibana Visualizations...');
     const options = utils.buildDeployerOptions(env, model);
@@ -318,7 +318,7 @@ const lib = {
    */
   deployKibana(opts, cb) {
     const soajs = opts.soajs;
-    const env = opts.envRecord;
+    const env = opts.soajs.registry;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
     utils.printProgress(soajs, 'Checking Kibana...');
@@ -341,7 +341,6 @@ const lib = {
       const options = utils.buildDeployerOptions(env, model);
       options.params = content;
       
-      console.log(JSON.stringify(content, null, 2))
       async.parallel({
         deploy(call) {
           deployer.deployService(options, call);
@@ -366,7 +365,7 @@ const lib = {
    */
   deployLogstash(opts, cb) {
     const soajs = opts.soajs;
-    const env = opts.envRecord;
+    const env = opts.soajs.registry;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
     utils.printProgress(soajs, 'Checking Logstash...');
@@ -384,7 +383,6 @@ const lib = {
       if (err) {
         return cb(err);
       }
-      console.log(JSON.stringify(content, null, 2))
       utils.printProgress(soajs, 'Deploying Logstash...');
       const options = utils.buildDeployerOptions(env, model);
       options.params = content;
@@ -414,7 +412,7 @@ const lib = {
    */
   deployFilebeat(opts, cb) {
     const soajs = opts.soajs;
-    const env = opts.envRecord;
+    const env = opts.soajs.registry;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
     utils.printProgress(soajs, 'Checking Filebeat...');
@@ -432,7 +430,6 @@ const lib = {
       if (err) {
         return cb(err);
       }
-      console.log(JSON.stringify(content, null, 2))
       utils.printProgress(soajs, 'Deploying Filebeat...');
       const options = utils.buildDeployerOptions(env, model);
       options.params = content;
@@ -461,7 +458,7 @@ const lib = {
    */
   deployMetricbeat(opts, cb) {
     const soajs = opts.soajs;
-    const env = opts.envRecord;
+    const env = opts.soajs.registry;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
     utils.printProgress(soajs, 'Checking Metricbeat...');
@@ -482,7 +479,6 @@ const lib = {
       if (err) {
         return cb(err);
       }
-      console.log(JSON.stringify(content, null, 2))
       utils.printProgress(soajs, 'Deploying Metricbeat...');
       const options = utils.buildDeployerOptions(env, model);
       options.params = content;
@@ -574,7 +570,7 @@ const lib = {
   setDefaultIndex(opts, cb) {
     let soajs = opts.soajs;
     let deployment = opts.deployment;
-    let env = opts.envRecord;
+    let env = opts.soajs.registry;
     let esClient = opts.esClient;
     let model = opts.model;
     let tracker = opts.tracker;

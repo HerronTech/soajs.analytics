@@ -40,7 +40,6 @@ const utils = {
     for (let i = 0; i < selected.length; i++) {
       envDeployer = envDeployer[selected[i]];
     }
-    
     options.deployerConfig = envDeployer;
     options.soajs = {registry: envRecord};
     options.model = model;
@@ -306,7 +305,7 @@ const utils = {
       }
     }, (error) => {
       if (!process.env.SOAJS_INSTALL_DEBUG) {
-        es_analytics_cluster.config.extraParam.log = [{
+        es_analytics_cluster.extraParam.log = [{
           type: 'stdio',
           levels: [] // remove the logs
         }];
@@ -454,7 +453,7 @@ const utils = {
   checkElasticsearch(opts, cb) {
     const soajs = opts.soajs;
     const deployment = opts.deployment;
-    const env = opts.envRecord;
+    const env = opts.soajs.registry;
     const model = opts.model;
     const es_dbName = opts.es_dbName;
     utils.printProgress(soajs, 'Checking Elasticsearch');
@@ -501,7 +500,7 @@ const utils = {
    */
   pingElastic(context, cb) {
     let soajs = context.soajs;
-    let env = context.envRecord;
+    let env = context.soajs.registry;
     let esDbInfo = context.esDbInfo;
     let model = context.model;
     let tracker = context.tracker;
@@ -511,7 +510,7 @@ const utils = {
       if (error) {
         // soajs.log.error(error);
         tracker[env.environment.toLowerCase()].counterPing++;
-        utils.printProgress(soajs, "Waiting for ES Cluster to reply, attempt:", tracker[env.environment.toLowerCase()].counterPing, "/", 10);
+        utils.printProgress(soajs, `Waiting for ES Cluster to reply, attempt: ${tracker[env.environment.toLowerCase()].counterPing} / 10`);
         if (tracker[env.environment.toLowerCase()].counterPing >= 10) { // wait 5 min
           soajs.log.error("Elasticsearch wasn't deployed... exiting");
           
@@ -601,7 +600,7 @@ const utils = {
    */
   "infoElastic": function (context, cb) {
     let soajs = context.soajs;
-    let env = context.envRecord;
+    let env = context.soajs.registry;
     let esDbInfo = context.esDbInfo;
     let esClient = context.esClient;
     let model = context.model;
@@ -612,7 +611,7 @@ const utils = {
       if (error) {
         // soajs.log.error(error);
         tracker[env.environment.toLowerCase()].counterInfo++;
-        utils.printProgress(soajs, "ES cluster found but not ready, Trying again:", tracker[env.environment.toLowerCase()].counterInfo, "/", 15);
+        utils.printProgress(soajs, `ES cluster found but not ready, Trying again: ${tracker[env.environment.toLowerCase()].counterInfo} / 15`);
         if (tracker[env.environment.toLowerCase()].counterInfo >= 15) { // wait 5 min
           soajs.log.error("Elasticsearch wasn't deployed correctly ... exiting");
           
@@ -782,7 +781,7 @@ const utils = {
   "configureKibana": function (context, servicesList, cb) {
     let soajs = context.soajs;
     let esClient = context.esClient;
-    let env = context.envRecord;
+    let env = context.soajs.registry;
     let model = context.model;
     let analyticsArray = [];
     let serviceEnv = env.environment.toLowerCase();
@@ -1016,7 +1015,7 @@ const utils = {
     const model = opts.model;
     const catalogDeployment = opts.catalogDeployment;
     const deployment = opts.deployment;
-    const env = opts.envRecord;
+    const env = opts.soajs.registry;
     const esCluster = opts.esDbInfo.esCluster;
     const elasticAddress = opts.elasticAddress;
     if (service === 'elastic' || service === 'filebeat' || (deployment && deployment.external)) {
