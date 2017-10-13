@@ -306,7 +306,7 @@ const utils = {
       }
     }, (error) => {
       if (!process.env.SOAJS_INSTALL_DEBUG) {
-        es_analytics_cluster.extraParam.log = [{
+        es_analytics_cluster.config.extraParam.log = [{
           type: 'stdio',
           levels: [] // remove the logs
         }];
