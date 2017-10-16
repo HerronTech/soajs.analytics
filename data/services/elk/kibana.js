@@ -20,16 +20,15 @@ module.exports = {
     args: ['-c', 'node index.js -T kibana'],
   },
   deployConfig: {
-    version: '5.3.0',
+    version: '5.5.3', //ma ela 3azi?
     image: 'soajstest/kibana',
     workDir: '/opt/soajs/deployer',
-    memoryLimit: 1000000000,
     network: 'soajsnet',
     ports: [
       {
         isPublished: true,
         published: 32601,
-        target: 32601,
+        target: 5601,
       },
     ],
     replication: {

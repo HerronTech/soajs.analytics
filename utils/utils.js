@@ -616,7 +616,7 @@ const utils = {
         tracker[env.environment.toLowerCase()].counterInfo++;
         utils.printProgress(soajs, `ES cluster found but not ready, Trying again: ${tracker[env.environment.toLowerCase()].counterInfo} / 15`);
         if (tracker[env.environment.toLowerCase()].counterInfo >= 15) { // wait 5 min
-          soajs.log.error("Elasticsearch wasn't deployed correctly ... exiting");
+          utils.printProgress(soajs, "Elasticsearch wasn't deployed correctly ... exiting");
           
           async.parallel([
             function (miniCb) {

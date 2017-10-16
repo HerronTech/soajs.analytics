@@ -8,7 +8,7 @@ const utils = require('../utils/utils');
 const collection = {
   analytics: 'analytics',
 };
-
+const elasticConfig = require('../data/services/elk/elastic.js');
 let tracker = {};
 const script = {
   checkAnalytics(opts, cb) {
@@ -18,37 +18,41 @@ const script = {
     const data = {};
     // return tracker ready
     let activated = false;
-    if (settings && settings.env) {
-      activated = utils.getActivatedEnv(settings, env);
-    }
-    if (settings && settings.env && settings.env[env]) {
-      if (!(tracker[env] && tracker[env].info && tracker[env].info.status)) {
-        tracker[env] = {
-          info: {
-            status: 'ready',
-            ts: date,
-          }
-        };
-        data[env] = true;
-        data.tracker = tracker[env];
-        data.activated = activated;
-      } else {
-        data.tracker = tracker[env];
-        data[env] = true;
+    if (settings) {
+      if (settings.env) {
+        activated = utils.getActivatedEnv(settings, env);
+      }
+      data.elasticsearch = settings.elasticsearch ? settings.elasticsearch : {};
+      data.kibana = settings.kibana ? settings.kibana : {};
+      if (settings.env && settings.env[env]) {
+        if (!(tracker[env] && tracker[env].info && tracker[env].info.status)) {
+          tracker[env] = {
+            info: {
+              status: 'ready',
+              ts: date,
+            }
+          };
+          data[env] = true;
+          data.tracker = tracker[env];
+          data.activated = activated;
+        } else {
+          data.tracker = tracker[env];
+          data[env] = true;
+          data.activated = activated;
+        }
+      }
+      else {
+        data.tracker = tracker[env] || {};
+        data[env] = false;
         data.activated = activated;
       }
-    } else {
+    }
+    else {
       data.tracker = tracker[env] || {};
       data[env] = false;
       data.activated = activated;
-    }
-    if (settings) {
-      if (settings.kibana) {
-        data.kibana = settings.kibana;
-      }
-      if (settings.elasticsearch) {
-        data.elasticsearch = settings.elasticsearch;
-      }
+      data.elasticsearch = {};
+      data.kibana = {};
     }
     return cb(null, data);
   },
@@ -86,6 +90,7 @@ const script = {
         ts: date,
       },
     };
+    
     function returnTracker() {
       if (mode === 'dashboard') {
         tracker[env] = {
@@ -120,14 +125,26 @@ const script = {
       tracker[env].counterAvailability = 0;
       tracker[env].counterKibana = 0;
       opts.tracker = tracker;
-      opts.esClient = new soajs.es(opts.esDbInfo.esCluster);
-    
+      if (mode === 'dashboard') {
+        opts.esClient = new soajs.es(opts.esDbInfo.esCluster);
+      }
+      else {
+        if (mode === 'installer') {
+          let cluster = JSON.parse(JSON.stringify(opts.esDbInfo.esCluster));
+          if (Object.hasOwnProperty.call(opts.analyticsSettings.elasticsearch, 'external')
+            && !opts.analyticsSettings.elasticsearch.external) {
+            cluster.servers[0].port = elasticConfig.deployConfig.ports[0].published;
+          }
+          opts.esClient = new soajs.es(cluster);
+        }
+      }
+      
       async.eachSeries(workFlowMethods, (methodName, cb) => {
         operations.push(async.apply(step[methodName], opts));
         return cb();
       }, () => {
         async.series(operations, (err) => {
-          if (err){
+          if (err) {
             console.log("err: ", err)
             tracker[env] = {
               "info": {
@@ -136,7 +153,7 @@ const script = {
               }
             };
           }
-          tracker =  opts.tracker;
+          tracker = opts.tracker;
           if (mode === 'installer') {
             opts.esClient.close();
             return cb(err);

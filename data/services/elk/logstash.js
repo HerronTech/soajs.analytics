@@ -23,7 +23,6 @@ module.exports = {
   deployConfig: {
     image: 'soajstest/logstash',
     workDir: '/opt/soajs/deployer',
-    memoryLimit: 1000000000,
     network: 'soajsnet',
     ports: [
       {

@@ -29,7 +29,6 @@ module.exports = {
   },
   deployConfig: {
     image: 'soajstest/elasticsearch',
-    memoryLimit: 2000000000,
     workDir: '/opt/soajs/deployer',
     network: 'soajsnet',
     ports: [

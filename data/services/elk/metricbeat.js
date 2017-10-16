@@ -22,7 +22,6 @@ module.exports = {
   deployConfig: {
     workDir: '/opt/soajs/deployer',
     image: 'soajstest/metricbeat',
-    memoryLimit: 500000000,
     network: 'soajsnet',
     replication: {
       mode: 'global',

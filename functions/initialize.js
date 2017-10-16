@@ -506,7 +506,7 @@ const lib = {
    * @param {function} cb: callback function
    */
   checkAvailability(opts, cb) {
-    let soajs = opt.soajs;
+    let soajs = opts.soajs;
     let env = opts.soajs.registry;
     let deployment = opts.deployment;
     let model = opts.model;
@@ -515,7 +515,7 @@ const lib = {
     options.params = {
       deployment,
     };
-    let flk = ['soajs-kibana', `soajs-logstash`, `${env.environment.toLowerCase()}-filebeat`, 'soajs-metricbeat'];
+    let flk = ['soajs-kibana', `${env.environment.toLowerCase()}-logstash`, `${env.environment.toLowerCase()}-filebeat`, 'soajs-metricbeat'];
     
     //if kubernetes no need
     if (env.deployer.selected.indexOf("container.kubernetes") !== -1) {
@@ -573,7 +573,6 @@ const lib = {
     let env = opts.soajs.registry;
     let esClient = opts.esClient;
     let model = opts.model;
-    let tracker = opts.tracker;
     //this is not done yet
     utils.printProgress(soajs, 'Waiting for kibana...');
     let counter = 0;
