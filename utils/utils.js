@@ -70,70 +70,6 @@ const utils = {
     return activated;
   },
   
-  /**
-   * check if soajs elasticsearch is deployed
-   * @param {object} soajs: req.soajs object
-   * @param {object} model: mongo object
-   * @param {object} dashboard: dashboard environment object
-   * @param {object} envRecord: current environment object
-   * @param {object} settings: analytics settings object
-   * @param {function} cb: callback function
-   */
-  addEsClusterToDashboard(soajs, model, dashboard, envRecord, settings, cb) {
-    const uid = uuid.v4();
-    const es_analytics_db_name = `es_analytics_db_${uid}`;
-    const es_analytics_cluster_name = `es_analytics_cluster_${uid}`;
-    const es_analytics_cluster = config.elasticsearch.cluster;
-    
-    if (envRecord.deployer.selected.split('.')[1] === 'kubernetes') {
-      // added support for namespace and perService
-      let namespace = envRecord.deployer.container.kubernetes[envRecord.deployer.selected.split('.')[2]].namespace.default;
-      if (envRecord.deployer.container.kubernetes[envRecord.deployer.selected.split('.')[2]].namespace.perService) {
-        namespace += '-soajs-analytics-elasticsearch-service';
-      }
-      es_analytics_cluster.servers[0].host += `-service.${namespace}`;
-    }
-    dashboard.dbs.databases[es_analytics_db_name] = {
-      cluster: es_analytics_cluster_name,
-      tenantSpecific: false,
-      usedForAnalytics: true,
-    };
-    dashboard.dbs.clusters[es_analytics_cluster_name] = es_analytics_cluster;
-    
-    async.parallel({
-      updateDashboard(call) {
-        const comboD = {};
-        comboD.collection = collections.environment;
-        comboD.record = dashboard;
-        model.saveEntry(soajs, comboD, call);
-      },
-      updateSettings(call) {
-        const comboS = {};
-        comboS.collection = collections.analytics;
-        if (!settings) {
-          settings = {};
-          settings._type = 'settings';
-          settings.env = {};
-          settings.env[envRecord.code.toLowerCase()] = false;
-          settings.elasticsearch = {
-            db_name: es_analytics_db_name,
-          };
-          comboS.record = settings;
-          model.insertEntry(soajs, comboS, call);
-        } else {
-          settings.elasticsearch.db_name = es_analytics_db_name;
-          comboS.record = settings;
-          model.saveEntry(soajs, comboS, call);
-        }
-      },
-    }, function (err) {
-      if (err) {
-        return cb(err);
-      }
-      return cb(null, es_analytics_cluster);
-    });
-  },
-  
   "setEsCluster": (opts, cb) => {
     const soajs = opts.soajs;
     let settings = opts.analyticsSettings;
@@ -1029,7 +965,7 @@ const utils = {
     const model = opts.model;
     const catalogDeployment = opts.catalogDeployment;
     const deployment = opts.deployment;
-    const env = opts.envRecord;
+    const env = opts.soajs.registry
     const envCode = opts.envCode;
     const esCluster = opts.esDbInfo.esCluster;
     const elasticAddress = opts.elasticAddress;
