@@ -1030,7 +1030,7 @@ const utils = {
     const catalogDeployment = opts.catalogDeployment;
     const deployment = opts.deployment;
     const env = opts.envRecord;
-    const envCode = context.envCode;
+    const envCode = opts.envCode;
     const esCluster = opts.esDbInfo.esCluster;
     const elasticAddress = opts.elasticAddress;
     if (service === 'elastic' || service === 'filebeat' || (deployment && deployment.external)) {
