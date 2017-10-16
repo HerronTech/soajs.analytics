@@ -6,8 +6,7 @@ const fs = require('fs');
 // const deployer = require('soajs').drivers;
 const deployer = require('soajs.core.drivers');
 const utils = require('../utils/utils');
-const es = require('../utils/es');
-
+const kibanaConfig = require('../data/services/elk/kibana.js');
 const recipes = require('../data/recipes/index');
 const collection = {
   analytics: 'analytics',
@@ -132,6 +131,7 @@ const lib = {
   deployElastic(opts, cb) {
     const soajs = opts.soajs;
     const config = opts.config;
+    const envCode = opts.envCode;
     const mode = opts.mode;
     const env = opts.soajs.registry;
     const analyticsSettings = opts.analyticsSettings;
@@ -170,7 +170,7 @@ const lib = {
           if (err) {
             return call(err);
           }
-          const options = utils.buildDeployerOptions(env, model);
+          const options = utils.buildDeployerOptions(env, envCode, model);
           options.params = content;
           
           
@@ -301,8 +301,9 @@ const lib = {
     const deployment = opts.deployment;
     const env = opts.soajs.registry;
     const model = opts.model;
+    const envCode = opts.envCode;
     utils.printProgress(soajs, 'Adding Kibana Visualizations...');
-    const options = utils.buildDeployerOptions(env, model);
+    const options = utils.buildDeployerOptions(env, envCode, model);
     options.params = {
       deployment
     };
@@ -321,6 +322,7 @@ const lib = {
     const env = opts.soajs.registry;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
+    const envCode = opts.envCode;
     utils.printProgress(soajs, 'Checking Kibana...');
     const combo = {};
     combo.collection = collection.analytics;
@@ -338,7 +340,7 @@ const lib = {
       if (err) {
         return cb(err);
       }
-      const options = utils.buildDeployerOptions(env, model);
+      const options = utils.buildDeployerOptions(env, envCode, model);
       options.params = content;
       
       async.parallel({
@@ -366,6 +368,7 @@ const lib = {
   deployLogstash(opts, cb) {
     const soajs = opts.soajs;
     const env = opts.soajs.registry;
+    const envCode = opts.envCode;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
     utils.printProgress(soajs, 'Checking Logstash...');
@@ -375,7 +378,7 @@ const lib = {
       _type: 'settings',
     };
     
-    if (analyticsSettings && analyticsSettings.logstash && analyticsSettings.logstash[env.environment.toLowerCase()] && analyticsSettings.logstash[env.environment.toLowerCase()].status === 'deployed') {
+    if (analyticsSettings && analyticsSettings.logstash && analyticsSettings.logstash[envCode] && analyticsSettings.logstash[envCode].status === 'deployed') {
       utils.printProgress(soajs, 'Logstash found...');
       return cb(null, true);
     }
@@ -384,7 +387,7 @@ const lib = {
         return cb(err);
       }
       utils.printProgress(soajs, 'Deploying Logstash...');
-      const options = utils.buildDeployerOptions(env, model);
+      const options = utils.buildDeployerOptions(env, envCode, model);
       options.params = content;
       async.parallel({
         deploy(call) {
@@ -394,7 +397,7 @@ const lib = {
           if (!analyticsSettings.logstash) {
             analyticsSettings.logstash = {};
           }
-          analyticsSettings.logstash[env.environment.toLowerCase()] = {
+          analyticsSettings.logstash[envCode] = {
             status: 'deployed',
           };
           combo.record = analyticsSettings;
@@ -413,6 +416,7 @@ const lib = {
   deployFilebeat(opts, cb) {
     const soajs = opts.soajs;
     const env = opts.soajs.registry;
+    const envCode = opts.envCode;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
     utils.printProgress(soajs, 'Checking Filebeat...');
@@ -422,7 +426,7 @@ const lib = {
       _type: 'settings',
     };
     
-    if (analyticsSettings && analyticsSettings.filebeat && analyticsSettings.filebeat[env.environment.toLowerCase()] && analyticsSettings.filebeat[env.environment.toLowerCase()].status === 'deployed') {
+    if (analyticsSettings && analyticsSettings.filebeat && analyticsSettings.filebeat[envCode] && analyticsSettings.filebeat[envCode].status === 'deployed') {
       utils.printProgress(soajs, 'Filebeat found...');
       return cb(null, true);
     }
@@ -431,7 +435,7 @@ const lib = {
         return cb(err);
       }
       utils.printProgress(soajs, 'Deploying Filebeat...');
-      const options = utils.buildDeployerOptions(env, model);
+      const options = utils.buildDeployerOptions(env, envCode, model);
       options.params = content;
       async.parallel({
         deploy(call) {
@@ -441,7 +445,7 @@ const lib = {
           if (!analyticsSettings.filebeat) {
             analyticsSettings.filebeat = {};
           }
-          analyticsSettings.filebeat[env.environment.toLowerCase()] = {
+          analyticsSettings.filebeat[envCode] = {
             status: 'deployed',
           };
           combo.record = analyticsSettings;
@@ -458,6 +462,7 @@ const lib = {
    */
   deployMetricbeat(opts, cb) {
     const soajs = opts.soajs;
+    const envCode = opts.envCode;
     const env = opts.soajs.registry;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
@@ -480,7 +485,7 @@ const lib = {
         return cb(err);
       }
       utils.printProgress(soajs, 'Deploying Metricbeat...');
-      const options = utils.buildDeployerOptions(env, model);
+      const options = utils.buildDeployerOptions(env, envCode, model);
       options.params = content;
       async.parallel({
         deploy(call) {
@@ -509,17 +514,18 @@ const lib = {
     let soajs = opts.soajs;
     let env = opts.soajs.registry;
     let deployment = opts.deployment;
+    let envCode = opts.envCode;
     let model = opts.model;
     let tracker = opts.tracker;
-    const options = utils.buildDeployerOptions(env, model);
+    const options = utils.buildDeployerOptions(env, envCode, model);
     options.params = {
       deployment,
     };
-    let flk = ['soajs-kibana', `${env.environment.toLowerCase()}-logstash`, `${env.environment.toLowerCase()}-filebeat`, 'soajs-metricbeat'];
+    let flk = ['soajs-kibana', `${envCode}-logstash`, `${envCode}-filebeat`, 'soajs-metricbeat'];
     
     //if kubernetes no need
     if (env.deployer.selected.indexOf("container.kubernetes") !== -1) {
-      flk = ["kibana", "logstash", env.environment.toLowerCase() + '-' + "filebeat"];
+      flk = ["soajs-kibana", `${envCode}-logstash`, `${envCode}-filebeat`, 'soajs-metricbeat'];
     }
     
     function check(cb) {
@@ -543,8 +549,8 @@ const lib = {
           }
         });
         if (failed.length !== 0) {
-          tracker[env.environment.toLowerCase()].counterAvailability++;
-          if (tracker[env.environment.toLowerCase()].counterAvailability > 150) {
+          tracker[envCode].counterAvailability++;
+          if (tracker[envCode].counterAvailability > 150) {
             soajs.log.error(failed.join(" , ") + "were/was not deployed... exiting");
             return cb(new Error(failed.join(" , ") + "were/was not deployed... exiting"));
           }
@@ -572,6 +578,7 @@ const lib = {
     let deployment = opts.deployment;
     let env = opts.soajs.registry;
     let esClient = opts.esClient;
+    let envCode = opts.envCode;
     let model = opts.model;
     //this is not done yet
     utils.printProgress(soajs, 'Waiting for kibana...');
@@ -580,7 +587,7 @@ const lib = {
       index: '.soajs-kibana',
       type: 'config',
       body: {
-        doc: {defaultIndex: 'filebeat-*'},
+        doc: {defaultIndex: 'metricbeat-*'},
       },
     };
     const condition = {
@@ -594,8 +601,8 @@ const lib = {
     const options = {
       method: 'GET',
     };
-    let kibanaPort = "5601";
-    let externalKibana = "32601";
+    let kibanaPort = kibanaConfig.deployConfig.ports[0].target;
+    let externalKibana = kibanaConfig.deployConfig.ports[0].published;
     function getKibanaUrl(cb) {
       let url;
       if (deployment && deployment.external) {
@@ -603,7 +610,7 @@ const lib = {
         return cb(null, url);
       }
       
-      const options = utils.buildDeployerOptions(env, model);
+      const options = utils.buildDeployerOptions(env, envCode, model);
       deployer.listServices(options, (err, servicesList) => {
         if (err) {
           return cb(err);
@@ -626,7 +633,6 @@ const lib = {
     function kibanaStatus(cb) {
       request(options, (error, response) => {
         if (error || !response) {
-          console.log("error", error);
           setTimeout(() => {
             if (counter > 150) { // wait 5 min
               cb(error);
@@ -683,6 +689,7 @@ const lib = {
               index.id = kibanaRes.hits.hits[0]._id;
               async.parallel({
                 updateES(call) {
+                  console.log(index)
                   esClient.db.update(index, call);
                 },
                 updateSettings(call) {
@@ -695,7 +702,7 @@ const lib = {
                       },
                     },
                   };
-                  result.env[env.environment.toLowerCase()] = true;
+                  result.env[envCode] = true;
                   criteria.$set.env = result.env;
                   const options = {
                     safe: true,

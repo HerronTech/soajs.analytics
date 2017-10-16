@@ -22,7 +22,7 @@ const utils = {
    * @param {object} envRecord: environment object
    * @param {object} model: mongo object
    */
-  buildDeployerOptions(envRecord, model) {
+  buildDeployerOptions(envRecord, envCode, model) {
     const options = {};
     let envDeployer = envRecord.deployer;
     
@@ -35,7 +35,7 @@ const utils = {
     
     options.strategy = selected[1];
     options.driver = `${selected[1]}.${selected[2]}`;
-    options.envRecord = envRecord.environment.toLowerCase();
+    options.envRecord = envCode;
     
     for (let i = 0; i < selected.length; i++) {
       envDeployer = envDeployer[selected[i]];
@@ -461,7 +461,7 @@ const utils = {
     const es_dbName = opts.es_dbName;
     utils.printProgress(soajs, 'Checking Elasticsearch');
     if (!es_dbName) {
-      const options = utils.buildDeployerOptions(env, model);
+      const options = utils.buildDeployerOptions(env, opts.envCode, model);
       options.params = {
         deployment,
       };
@@ -504,6 +504,7 @@ const utils = {
   pingElastic(context, cb) {
     let soajs = context.soajs;
     let env = context.soajs.registry;
+    let envCode = context.envCode;
     let esDbInfo = context.esDbInfo;
     let model = context.model;
     let tracker = context.tracker;
@@ -512,9 +513,9 @@ const utils = {
     esClient.ping((error) => {
       if (error) {
         // soajs.log.error(error);
-        tracker[env.environment.toLowerCase()].counterPing++;
-        utils.printProgress(soajs, `Waiting for ES Cluster to reply, attempt: ${tracker[env.environment.toLowerCase()].counterPing} / 10`);
-        if (tracker[env.environment.toLowerCase()].counterPing >= 10) { // wait 5 min
+        tracker[envCode].counterPing++;
+        utils.printProgress(soajs, `Waiting for ES Cluster to reply, attempt: ${tracker[envCode].counterPing} / 10`);
+        if (tracker[envCode].counterPing >= 10) { // wait 5 min
           soajs.log.error("Elasticsearch wasn't deployed... exiting");
           
           async.parallel([
@@ -604,6 +605,7 @@ const utils = {
   "infoElastic": function (context, cb) {
     let soajs = context.soajs;
     let env = context.soajs.registry;
+    let envCode = context.envCode;
     let esDbInfo = context.esDbInfo;
     let esClient = context.esClient;
     let model = context.model;
@@ -613,9 +615,9 @@ const utils = {
     esClient.db.info((error) => {
       if (error) {
         // soajs.log.error(error);
-        tracker[env.environment.toLowerCase()].counterInfo++;
-        utils.printProgress(soajs, `ES cluster found but not ready, Trying again: ${tracker[env.environment.toLowerCase()].counterInfo} / 15`);
-        if (tracker[env.environment.toLowerCase()].counterInfo >= 15) { // wait 5 min
+        tracker[envCode].counterInfo++;
+        utils.printProgress(soajs, `ES cluster found but not ready, Trying again: ${tracker[envCode].counterInfo} / 15`);
+        if (tracker[envCode].counterInfo >= 15) { // wait 5 min
           utils.printProgress(soajs, "Elasticsearch wasn't deployed correctly ... exiting");
           
           async.parallel([
@@ -784,10 +786,9 @@ const utils = {
   "configureKibana": function (context, servicesList, cb) {
     let soajs = context.soajs;
     let esClient = context.esClient;
-    let env = context.soajs.registry;
     let model = context.model;
     let analyticsArray = [];
-    let serviceEnv = env.environment.toLowerCase();
+    let serviceEnv = context.envCode;
     async.parallel({
         filebeat(pCallback) {
           async.each(servicesList, (oneService, callback) => {
@@ -1018,7 +1019,8 @@ const utils = {
     const model = opts.model;
     const catalogDeployment = opts.catalogDeployment;
     const deployment = opts.deployment;
-    const env = opts.soajs.registry;
+    const env = opts.envRecord;
+    const envCode = context.envCode;
     const esCluster = opts.esDbInfo.esCluster;
     const elasticAddress = opts.elasticAddress;
     if (service === 'elastic' || service === 'filebeat' || (deployment && deployment.external)) {
@@ -1075,7 +1077,7 @@ const utils = {
           logNameSpace = `-service.${env.deployer.container.kubernetes[env.deployer.selected.split('.')[2]].namespace.default}`;
           
           if (env.deployer.container.kubernetes[env.deployer.selected.split('.')[2]].namespace.perService) {
-            logNameSpace += `-${env.environment.toLowerCase()}-logstash-service`;
+            logNameSpace += `-${envCode}-logstash-service`;
           }
           // change published port name
          
@@ -1136,7 +1138,16 @@ const utils = {
         // if (service === "logstash" || service === "metricbeat") {
         // 	serviceParams = serviceParams.replace(/%elasticsearch_url%/g, auto.getElasticClientNode);
         // }
-        serviceParams = serviceParams.replace(/%env%/g, env.environment.toLowerCase());
+        if(serviceParams.indexOf("%env%") !== -1){
+          serviceParams = serviceParams.replace(/%env%/g, envCode);
+          serviceParams = JSON.parse(serviceParams);
+          serviceParams.labels['soajs.env.code'] = envCode;
+        }
+        else{
+          serviceParams = JSON.parse(serviceParams);
+          serviceParams.labels['soajs.env.code'] = envCode;
+        }
+        serviceParams = serviceParams.replace(/%env%/g, envCode);
         serviceParams = JSON.parse(serviceParams);
         serviceParams.deployment = deployment;
         return cb(null, serviceParams);

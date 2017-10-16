@@ -54,6 +54,9 @@ const script = {
       data.elasticsearch = {};
       data.kibana = {};
     }
+    if (data.elasticsearch.security){
+      delete data.elasticsearch.security;
+    }
     return cb(null, data);
   },
   
@@ -61,8 +64,8 @@ const script = {
     const data = {};
     const date = new Date().getTime();
     const mode = opts.mode;
-    const env = opts.soajs.registry.environment.toLowerCase();
-    
+    //const env opts.soajs.registry.environment.toLowerCase(= );
+    const env = opts.envCode;
     if (mode === 'dashboard' && opts.analyticsSettings
       && opts.analyticsSettings.env && opts.analyticsSettings.env[env]) {
       tracker[env] = {
@@ -87,8 +90,8 @@ const script = {
     tracker[env] = {
       info: {
         status: 'started',
-        ts: date,
-      },
+        ts: date
+      }
     };
     
     function returnTracker() {
@@ -126,6 +129,7 @@ const script = {
       tracker[env].counterKibana = 0;
       opts.tracker = tracker;
       if (mode === 'dashboard') {
+        console.log(opts.esDbInfo.esCluster, "cluster, dashboard")
         opts.esClient = new soajs.es(opts.esDbInfo.esCluster);
       }
       else {
@@ -135,6 +139,7 @@ const script = {
             && !opts.analyticsSettings.elasticsearch.external) {
             cluster.servers[0].port = elasticConfig.deployConfig.ports[0].published;
           }
+          console.log(cluster, "cluster, installer")
           opts.esClient = new soajs.es(cluster);
         }
       }
@@ -207,6 +212,7 @@ const script = {
   deactivate(opts, cb) {
     const soajs = opts.soajs;
     const env = opts.soajs.registry;
+    const envCode = opts.envCode;
     const model = opts.model;
     const combo = {};
     combo.collection = collection.analytics;
@@ -218,7 +224,7 @@ const script = {
       if (err) {
         return cb(err);
       }
-      const options = utils.buildDeployerOptions(env, model);
+      const options = utils.buildDeployerOptions(env, envCode, model);
       const activated = utils.getActivatedEnv(settings, environment);
       deactivate.deleteService(options, environment, activated, (error) => {
         if (error) {
