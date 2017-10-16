@@ -162,7 +162,7 @@ const lib = {
       if (analyticsSettings && analyticsSettings.elasticsearch
         && analyticsSettings.elasticsearch.status === "deployed") {
         //purge data since elasticsearch is not deployed
-        soajs.log.debug("Elasticsearch is already deployed...");
+        utils.printProgress(soajs, "Elasticsearch is already deployed...");
         return cb(null, true)
       }
       else {
@@ -176,7 +176,7 @@ const lib = {
           
           deployer.deployService(options, function (error) {
             if (error) {
-              soajs.log.error(error);
+              utils.printProgress(soajs, error, "error");
               analyticsSettings.elasticsearch = {};
             }
             else {
@@ -551,7 +551,7 @@ const lib = {
         if (failed.length !== 0) {
           tracker[envCode].counterAvailability++;
           if (tracker[envCode].counterAvailability > 150) {
-            soajs.log.error(failed.join(" , ") + "were/was not deployed... exiting");
+            utils.printProgress(soajs, failed.join(" , ") + "were/was not deployed... exiting", "error");
             return cb(new Error(failed.join(" , ") + "were/was not deployed... exiting"));
           }
           else {

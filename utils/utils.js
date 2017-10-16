@@ -281,7 +281,7 @@ const utils = {
             }
           ], (error) => {
             if (error) {
-              soajs.log.error(error);
+              utils.printProgress(soajs, error, "error");
             }
             return mCb(null, null);
           });
@@ -424,16 +424,26 @@ const utils = {
   },
   
   /**
-   * prints a message with a time prefix
-   * @param {object} soajs: req.soajs object
-   * @param {object} message: message to be printed
+   * prints a message with a time prefix or uses soajs log feature
+   * @param {object} args: object
    */
-  printProgress(soajs, message) {
-    if (soajs.log && soajs.log.debug) {
-      soajs.log.debug(message);
+  printProgress(...args) {
+    let soajs = args[0], message = args[1], type = args[2];
+    if (soajs.log) {
+      if (type === 'error' && soajs.log.error){
+        soajs.log.error(message);
+      }
+      if (soajs.log.debug) {
+        soajs.log.debug(message);
+      }
     }
     else {
-      console.log(showTimestamp() + ' - ' + message);
+      if (type === 'error'){
+        console.log(message);
+      }
+      else {
+        console.log(showTimestamp() + ' - ' + message);
+      }
     }
     
     function showTimestamp() {
@@ -516,7 +526,7 @@ const utils = {
         tracker[envCode].counterPing++;
         utils.printProgress(soajs, `Waiting for ES Cluster to reply, attempt: ${tracker[envCode].counterPing} / 10`);
         if (tracker[envCode].counterPing >= 10) { // wait 5 min
-          soajs.log.error("Elasticsearch wasn't deployed... exiting");
+          utils.printProgress(soajs, "Elasticsearch wasn't deployed... exiting", "error");
           
           async.parallel([
             function (miniCb) {
@@ -561,7 +571,7 @@ const utils = {
             }
           ], (err) => {
             if (err) {
-              soajs.log.error(err);
+              utils.printProgress(soajs, err, "error");
             }
             return cb(error);
           });
@@ -663,7 +673,7 @@ const utils = {
             }
           ], (err) => {
             if (err) {
-              soajs.log.error(err);
+              utils.printProgress(soajs, err, "error");
             }
             return cb(error);
           });
@@ -985,7 +995,7 @@ const utils = {
         if (analyticsArray.length !== 0) {
           utils.esBulk(esClient, analyticsArray, (error, response) => {
             if (error) {
-              soajs.log.error(error);
+              utils.printProgress(soajs, error, "error");
             }
             return cb(error, response);
           });
