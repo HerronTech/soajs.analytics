@@ -366,7 +366,7 @@ const utils = {
   printProgress(...args) {
     let soajs = args[0], message = args[1], type = args[2];
     if (soajs.log) {
-      if (type === 'error' && soajs.log.error){
+      if (type === 'error' && soajs.log.error) {
         soajs.log.error(message);
       }
       if (soajs.log.debug) {
@@ -374,7 +374,7 @@ const utils = {
       }
     }
     else {
-      if (type === 'error'){
+      if (type === 'error') {
         console.log(message);
       }
       else {
@@ -426,6 +426,7 @@ const utils = {
     else {
       return cb(null, true);
     }
+    
     function check(options, flk, cb) {
       deployer.listServices(options, (err, servicesList) => {
         if (err) {
@@ -952,7 +953,7 @@ const utils = {
   "esBulk": function (esClient, array, cb) {
     esClient.bulk(array, cb);
   },
-
+  
   /**
    * create deployment object
    * @param {object} opts: installer deployment object
@@ -1026,7 +1027,7 @@ const utils = {
             logNameSpace += `-${envCode}-logstash-service`;
           }
           // change published port name
-         
+          
           if (service === 'kibana') {
             serviceParams.ports[0].published = 32601;
           }
@@ -1084,17 +1085,15 @@ const utils = {
         // if (service === "logstash" || service === "metricbeat") {
         // 	serviceParams = serviceParams.replace(/%elasticsearch_url%/g, auto.getElasticClientNode);
         // }
-        if(serviceParams.indexOf("%env%") !== -1){
+        if (serviceParams.indexOf("%env%") !== -1) {
           serviceParams = serviceParams.replace(/%env%/g, envCode);
           serviceParams = JSON.parse(serviceParams);
           serviceParams.labels['soajs.env.code'] = envCode;
         }
-        else{
+        else {
           serviceParams = JSON.parse(serviceParams);
           serviceParams.labels['soajs.env.code'] = envCode;
         }
-        serviceParams = serviceParams.replace(/%env%/g, envCode);
-        serviceParams = JSON.parse(serviceParams);
         serviceParams.deployment = deployment;
         return cb(null, serviceParams);
       });
@@ -1112,6 +1111,7 @@ const utils = {
         return cb('invalid service name');
       }
     }
+    
     //do i need an else??
     
     
@@ -1145,7 +1145,7 @@ const utils = {
           combo.conditions.subtype = 'kibana';
           soajs.inputmaskData.custom = {
             name: 'soajs-kibana',
-           // allEnv: true,
+            // allEnv: true,
             env: {
               ELASTICSEARCH_URL: `${esCluster.URLParam.protocol}://${elasticAddress}`,
             },
