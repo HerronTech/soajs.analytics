@@ -371,7 +371,7 @@ const utils = {
   "listEnvironments": (soajs, model, cb) => {
     let opts = {};
     opts.collection = collections.environment;
-    opts.fields = {"dbs": 1};
+    opts.fields = {"dbs": 1, "code" :1};
     model.findEntries(soajs, opts, cb);
   },
   
