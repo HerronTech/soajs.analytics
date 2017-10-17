@@ -298,13 +298,15 @@ const lib = {
    */
   addVisualizations(opts, cb) {
     const soajs = opts.soajs;
-    //const deployment = opts.deployment;
+    const deployment = opts.deployment;
     const env = opts.soajs.registry;
     const model = opts.model;
     const envCode = opts.envCode;
     utils.printProgress(soajs, 'Adding Kibana Visualizations...');
     const options = utils.buildDeployerOptions(env, envCode, model);
-    options.params = options;
+    options.params = {
+      deployment
+    };
     deployer.listServices(options, (err, servicesList) => {
       utils.configureKibana(opts, servicesList, cb);
     });
