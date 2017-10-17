@@ -54,6 +54,6 @@ module.exports = {
     restartPolicy: {
       condition: 'any',
       maxAttempts: 15,
-    },
-  },
+    }
+  }
 };

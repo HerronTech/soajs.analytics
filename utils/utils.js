@@ -18,8 +18,8 @@ const metricbeatIndex = require('../data/indexes/metricbeat-index');
 const utils = {
   /**
    * build deployer object
-   * @param {object} soajs: req.soajs object
    * @param {object} envRecord: environment object
+   * @param {object} envCode: environment code to be deployed
    * @param {object} model: mongo object
    */
   buildDeployerOptions(envRecord, envCode, model) {
@@ -70,6 +70,11 @@ const utils = {
     return activated;
   },
   
+  /**
+   * check if analytics is active in any other environment
+   * @param {object} opts: analytics settings object
+   * @param {object} cb:
+   */
   "setEsCluster": (opts, cb) => {
     const soajs = opts.soajs;
     let settings = opts.analyticsSettings;
@@ -80,7 +85,7 @@ const utils = {
     let esExists = false;
     const soajsRegistry = soajs.registry;
     
-    function getEsDb(cb) {
+     function getEsDb(cb) {
       utils.listEnvironments(soajs, model, (err, envs) => {
         if (err) {
           return cb(err);
@@ -928,7 +933,6 @@ const utils = {
         if (err) {
           return cb(err);
         }
-        // if (analyticsArray.length !== 0 && !(process.env.SOAJS_TEST_ANALYTICS === 'test')) {
         if (analyticsArray.length !== 0) {
           utils.esBulk(esClient, analyticsArray, (error, response) => {
             if (error) {

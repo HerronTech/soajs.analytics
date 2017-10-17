@@ -16,7 +16,7 @@ module.exports = {
     "soajs.service.mode": "global"
   },
   command: {
-    cmd: ['sh'],
+    cmd: ['bash'],
     args: ['-c', 'node index.js -T metricbeat'],
   },
   deployConfig: {

@@ -1,18 +1,18 @@
 'use strict';
 module.exports = {
   env: 'dashboard', // it's only used to get the deployer cluster
-  name: 'kibana',
+  name: 'soajs-kibana',
   variables: [
     // 'ELASTICSEARCH_URL=http://soajs-analytics-elasticsearch%esNameSpace%:9200' //add support for kubernetes (add namespace)
     'ELASTICSEARCH_URL=%elasticsearch_url%', // add support for kubernetes (add namespace)
   ],
   labels: {
     "soajs.content": "true",
-    "soajs.service.name": "kibana",
+    "soajs.service.name": "soajs-kibana",
     "soajs.service.type": "system",
     "soajs.service.subtype": "kibana",
     "soajs.service.group": "soajs-analytics",
-    "soajs.service.label": "kibana",
+    "soajs.service.label": "soajs-kibana",
     "soajs.service.mode": "replicated"
   },
   command: {

@@ -30,7 +30,7 @@ module.exports = {
         Type: 'volume',
         ReadOnly: false,
         Source: 'soajs-filebeat',
-        Target: '/usr/share/filebeat/bin/data',
+        Target: '/usr/share/filebeat/data',
       },
       {
         Type: 'volume',
