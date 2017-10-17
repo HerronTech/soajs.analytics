@@ -92,7 +92,7 @@ const utils = {
         }
         if (envs && envs.length > 0) {
           let objEnv = envs.reduce(function (map, value) {
-            map[value.code] = value;
+            map[value.code.toLowerCase()] = value;
             return map;
           }, {});
           if (objEnv[opts.envCode].dbs && objEnv[opts.envCode].dbs.databases
