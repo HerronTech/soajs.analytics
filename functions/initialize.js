@@ -298,15 +298,13 @@ const lib = {
    */
   addVisualizations(opts, cb) {
     const soajs = opts.soajs;
-    const deployment = opts.deployment;
+    //const deployment = opts.deployment;
     const env = opts.soajs.registry;
     const model = opts.model;
     const envCode = opts.envCode;
     utils.printProgress(soajs, 'Adding Kibana Visualizations...');
     const options = utils.buildDeployerOptions(env, envCode, model);
-    options.params = {
-      deployment
-    };
+    options.params = options;
     deployer.listServices(options, (err, servicesList) => {
       utils.configureKibana(opts, servicesList, cb);
     });
@@ -389,7 +387,7 @@ const lib = {
       utils.printProgress(soajs, 'Deploying Logstash...');
       const options = utils.buildDeployerOptions(env, envCode, model);
       options.params = content;
-      async.parallel({
+      async.series({
         deploy(call) {
           deployer.deployService(options, call);
         },
@@ -437,7 +435,7 @@ const lib = {
       utils.printProgress(soajs, 'Deploying Filebeat...');
       const options = utils.buildDeployerOptions(env, envCode, model);
       options.params = content;
-      async.parallel({
+      async.series({
         deploy(call) {
           deployer.deployService(options, call);
         },
@@ -487,7 +485,7 @@ const lib = {
       utils.printProgress(soajs, 'Deploying Metricbeat...');
       const options = utils.buildDeployerOptions(env, envCode, model);
       options.params = content;
-      async.parallel({
+      async.series({
         deploy(call) {
           deployer.deployService(options, call);
         },

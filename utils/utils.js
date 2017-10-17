@@ -91,11 +91,22 @@ const utils = {
           return cb(err);
         }
         if (envs && envs.length > 0) {
-          for (let i = 0; i < envs.length; i++) {
-            if (envs[i].dbs && envs[i].dbs.databases && envs[i].dbs.databases[es_analytics_db]) {
-              es_analytics_cluster_name = envs[i].dbs.databases[es_analytics_db].cluster;
-              es_env = envs[i];
-              break;
+          let objEnv = envs.reduce(function (map, value) {
+            map[value.code] = value;
+            return map;
+          }, {});
+          if (objEnv[opts.envCode].dbs && objEnv[opts.envCode].dbs.databases
+            && objEnv[opts.envCode].dbs.databases[es_analytics_db]) {
+            es_analytics_cluster_name = objEnv[opts.envCode].dbs.databases[es_analytics_db].cluster;
+            es_env = objEnv;
+          }
+          else {
+            for (let key in objEnv) {
+              if (objEnv[key] !== objEnv[key].dbs && objEnv[key].dbs.databases && objEnv[key].dbs.databases[es_analytics_db]) {
+                es_analytics_cluster_name = objEnv[key].dbs.databases[es_analytics_db].cluster;
+                es_env = objEnv[key];
+                break;
+              }
             }
           }
         }
@@ -970,7 +981,7 @@ const utils = {
     const model = opts.model;
     const catalogDeployment = opts.catalogDeployment;
     const deployment = opts.deployment;
-    const env = opts.soajs.registry
+    const env = opts.soajs.registry;
     const envCode = opts.envCode;
     const esCluster = opts.esDbInfo.esCluster;
     const elasticAddress = opts.elasticAddress;
@@ -1105,7 +1116,7 @@ const utils = {
       // incase of kibana add the url
       // call mongo and get the recipe id
       if (service === 'metricbeat' || service === 'logstash' || service === 'kibana') {
-        fillCatalogOpts(soajs, model, (err) => {
+        fillCatalogOpts((err) => {
           if (err) {
             return cb(err);
           }
@@ -1119,7 +1130,8 @@ const utils = {
     //do i need an else??
     
     
-    function fillCatalogOpts(soajs, model, call) {
+    function fillCatalogOpts(call) {
+      
       const combo = {};
       combo.collection = collections.catalogs;
       combo.conditions = {
@@ -1136,7 +1148,7 @@ const utils = {
           combo.conditions.name = 'Logstash Recipe';
           combo.conditions.subtype = 'logstash';
           soajs.inputmaskData.custom = {
-            name: `${env.environment.toLowerCase()}-logstash`
+            name: `${opts.envCode}-logstash`
           };
           soajs.inputmaskData.deployConfig = {
             replication: {
@@ -1191,7 +1203,7 @@ const utils = {
           return call(`No Recipe found for ${service}`);
         }
         soajs.inputmaskData.action = 'analytics';
-        soajs.inputmaskData.env = env.environment.toLowerCase();
+        soajs.inputmaskData.env = opts.envCode;
         soajs.inputmaskData.recipe = recipe._id.toString();
         return call(null, true);
       });

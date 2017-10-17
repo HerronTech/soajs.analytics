@@ -129,7 +129,6 @@ const script = {
       tracker[env].counterKibana = 0;
       opts.tracker = tracker;
       if (mode === 'dashboard') {
-        console.log(opts.esDbInfo.esCluster, "cluster, dashboard")
         opts.esClient = new soajs.es(opts.esDbInfo.esCluster);
       }
       else {
@@ -139,7 +138,6 @@ const script = {
             && !opts.analyticsSettings.elasticsearch.external) {
             cluster.servers[0].port = elasticConfig.deployConfig.ports[0].published;
           }
-          console.log(cluster, "cluster, installer")
           opts.esClient = new soajs.es(cluster);
         }
       }
@@ -149,6 +147,7 @@ const script = {
         return cb();
       }, () => {
         async.series(operations, (err) => {
+          opts.esClient.close();
           if (err) {
             console.log("err: ", err)
             tracker[env] = {
@@ -157,12 +156,16 @@ const script = {
                 "date": new Date().getTime()
               }
             };
+            tracker = opts.tracker;
+            if (mode === 'installer') {
+              return cb(err);
+            }
           }
-          tracker = opts.tracker;
-          if (mode === 'installer') {
-            opts.esClient.close();
-            return cb(err);
+          else {
+            utils.printProgress(soajs, "Analytics deployed");
           }
+        
+          
           //todo check if this is needed
           // else {
           //   script.deactivateAnalytics(opts.soajs, opts.env, opts.model, function (err) {
@@ -171,12 +174,8 @@ const script = {
           //     }
           //   });
           // }
-          else {
-            opts.esClient.close();
-          }
-          if (mode === 'dashboard') {
-            utils.printProgress(soajs, "Analytics deployed");
-          }
+         
+          
         });
       });
       // async.auto(operations, (err, auto) => {
