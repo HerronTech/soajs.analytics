@@ -163,6 +163,9 @@ const script = {
           }
           else {
             utils.printProgress(soajs, "Analytics deployed");
+            if (mode === 'installer') {
+              return cb(null, true);
+            }
           }
         
           
@@ -211,21 +214,20 @@ const script = {
   deactivate(opts, cb) {
     const soajs = opts.soajs;
     const env = opts.soajs.registry;
-    const envCode = opts.envCode;
+    const envCode = opts.soajs.inputmaskData.env.toLowerCase();
     const model = opts.model;
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
       _type: 'settings',
     };
-    const environment = env.environment.toLowerCase();
     model.findEntry(soajs, combo, (err, settings) => {
       if (err) {
         return cb(err);
       }
       const options = utils.buildDeployerOptions(env, envCode, model);
-      const activated = utils.getActivatedEnv(settings, environment);
-      deactivate.deleteService(options, environment, activated, (error) => {
+      const activated = utils.getActivatedEnv(settings, envCode);
+      deactivate.deleteService(options, envCode, activated, (error) => {
         if (error) {
           return cb(error);
         }
@@ -234,16 +236,16 @@ const script = {
           return cb(null, true);
         }
         
-        if (settings.env && settings.env[environment]) {
-          settings.env[environment] = false;
+        if (settings.env && settings.env[envCode]) {
+          settings.env[envCode] = false;
         }
         
-        if (settings.logstash && settings.logstash[environment]) {
-          delete settings.logstash[environment];
+        if (settings.logstash && settings.logstash[envCode]) {
+          delete settings.logstash[envCode];
         }
         
-        if (settings.filebeat && settings.filebeat[environment]) {
-          delete settings.filebeat[environment];
+        if (settings.filebeat && settings.filebeat[envCode]) {
+          delete settings.filebeat[envCode];
         }
         
         if (settings.metricbeat && !activated) {
