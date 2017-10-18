@@ -130,6 +130,9 @@ var catalogs = [
           "tag": "latest",
           "pullPolicy": "IfNotPresent"
         },
+        "labels": {
+          "soajs__dot__service__dot__group": "soajs-analytics"
+        },
         "container": {
           "network": "",
           "workingDir": "/opt/soajs/deployer"
@@ -186,6 +189,9 @@ var catalogs = [
           "name": "logstash",
           "tag": "latest",
           "pullPolicy": "IfNotPresent"
+        },
+        "labels": {
+          "soajs__dot__service__dot__group": "soajs-analytics"
         },
         "container": {
           "network": "",
@@ -261,6 +267,9 @@ var catalogs = [
         "voluming": {
           "volumes": [],
           "volumeMounts": []
+        },
+        "labels": {
+          "soajs__dot__service__dot__group": "soajs-analytics"
         },
         "ports": [
           {
