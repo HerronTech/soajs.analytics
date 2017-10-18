@@ -25,31 +25,31 @@ const utils = {
   buildDeployerOptions(envRecord, envCode, model) {
     const options = {};
     let envDeployer = envRecord.deployer;
-    
+
     if (!envDeployer) return null;
     if (Object.keys(envDeployer).length === 0) return null;
     if (!envDeployer.type || !envDeployer.selected) return null;
     if (envDeployer.type === 'manual') return null;
-    
+
     const selected = envDeployer.selected.split('.');
-    
+
     options.strategy = selected[1];
     options.driver = `${selected[1]}.${selected[2]}`;
     options.envRecord = envCode;
-    
+
     for (let i = 0; i < selected.length; i++) {
       envDeployer = envDeployer[selected[i]];
     }
     options.deployerConfig = envDeployer;
     options.soajs = {registry: envRecord};
     options.model = model;
-    
+
     // switch strategy name to follow drivers convention
     if (options.strategy === 'docker') options.strategy = 'swarm';
-    
+
     return options;
   },
-  
+
   /**
    * check if analytics is active in any other environment
    * @param {object} settings: analytics settings object
@@ -69,7 +69,7 @@ const utils = {
     }
     return activated;
   },
-  
+
   /**
    * check if analytics is active in any other environment
    * @param {object} opts: analytics settings object
@@ -84,7 +84,7 @@ const utils = {
     let es_env, es_analytics_db, es_analytics_cluster_name, es_analytics_cluster;
     let esExists = false;
     const soajsRegistry = soajs.registry;
-    
+
      function getEsDb(cb) {
       utils.listEnvironments(soajs, model, (err, envs) => {
         if (err) {
@@ -113,7 +113,7 @@ const utils = {
         return cb();
       });
     }
-    
+
     async.series({
       "checkSettings": (mCb) => {
         if (es_dbName) {
@@ -158,7 +158,7 @@ const utils = {
             es_analytics_cluster = es_env.dbs.clusters[es_analytics_cluster_name];
             removeOptions = {_id: es_env._id, name: es_analytics_cluster_name};
           }
-          
+
           if (es_analytics_cluster) {
             esExists = true;
           }
@@ -218,7 +218,7 @@ const utils = {
               if (es_analytics_db) {
                 delete es_env.dbs.databases[es_analytics_db];
               }
-              
+
               model.updateEntry(soajs, {
                 collection: collections.environment,
                 conditions: {_id: es_env._id},
@@ -254,7 +254,7 @@ const utils = {
           opts.record = settings;
           model.saveEntry(soajs, opts, mCb);
         }
-        
+
       }
     }, (error) => {
       if (!process.env.SOAJS_INSTALL_DEBUG) {
@@ -271,7 +271,7 @@ const utils = {
       return cb(error, true);
     });
   },
-  
+
   /**
    * Create a new es db entry in environment databases
    * @param soajs
@@ -285,13 +285,13 @@ const utils = {
     opts.conditions = {
       code: soajs.inputmaskData.env.toUpperCase()
     };
-    
+
     let newDB = {};
     newDB["dbs.databases." + options.dbName] = {
       "cluster": options.clusterName,
       "tenantSpecific": false
     };
-    
+
     opts.fields = {
       "$set": newDB
     };
@@ -300,10 +300,10 @@ const utils = {
       upsert: false,
       mutli: false
     };
-    
+
     model.updateEntry(soajs, opts, cb);
   },
-  
+
   /**
    * Save ES Cluster Resource
    * @param {Object} soajs
@@ -336,7 +336,7 @@ const utils = {
     };
     model.updateEntry(soajs, opts, cb);
   },
-  
+
   /**
    * Remove ES Cluster from Env Record
    * @param {Object} soajs
@@ -350,16 +350,16 @@ const utils = {
     opts.conditions = {
       _id: options._id
     };
-    
+
     let unset = {};
     unset["dbs.clusters." + options.name] = {};
-    
+
     opts.fields = {
       "$unset": unset
     };
     model.updateEntry(soajs, opts, cb);
   },
-  
+
   /**
    * List Environments
    * @param soajs
@@ -372,7 +372,7 @@ const utils = {
     opts.fields = {"dbs": 1, "code" :1};
     model.findEntries(soajs, opts, cb);
   },
-  
+
   /**
    * prints a message with a time prefix or uses soajs log feature
    * @param {object} args: object
@@ -395,7 +395,7 @@ const utils = {
         console.log(showTimestamp() + ' - ' + message);
       }
     }
-    
+
     function showTimestamp() {
       var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       var now = new Date();
@@ -404,7 +404,7 @@ const utils = {
         ((now.getSeconds().toString().length === 2) ? now.getSeconds() : '0' + now.getSeconds());
     }
   },
-  
+
   /**
    * check if soajs elasticsearch is deployed
    * @param {object} soajs: req.soajs object
@@ -440,7 +440,7 @@ const utils = {
     else {
       return cb(null, true);
     }
-    
+
     function check(options, flk, cb) {
       deployer.listServices(options, (err, servicesList) => {
         if (err) {
@@ -456,7 +456,7 @@ const utils = {
       });
     }
   },
-  
+
   /**
    * Check if Elastic Search is up and running
    * @param context
@@ -478,11 +478,11 @@ const utils = {
         utils.printProgress(soajs, `Waiting for ES Cluster to reply, attempt: ${tracker[envCode].counterPing} / 10`);
         if (tracker[envCode].counterPing >= 10) { // wait 5 min
           utils.printProgress(soajs, "Elasticsearch wasn't deployed... exiting", "error");
-          
+
           async.parallel([
             function (miniCb) {
               settings.elasticsearch = {};
-              
+
               model.saveEntry(soajs, {
                 collection: collections.analytics,
                 record: settings
@@ -495,10 +495,10 @@ const utils = {
                 if (error) {
                   return miniCb(error);
                 }
-                
+
                 async.each(environmentRecords, (oneEnv, vCb) => {
                   delete oneEnv.dbs.databases[esDbInfo.db];
-                  
+
                   if (oneEnv.dbs.clusters) {
                     delete oneEnv.dbs.clusters[esDbInfo.cluster];
                   }
@@ -510,7 +510,7 @@ const utils = {
                   if (error) {
                     return miniCb(error);
                   }
-                  
+
                   if (env.resources) {
                     utils.removeESClustersFromEnvRecord(soajs, esDbInfo.cluster, model, miniCb);
                   }
@@ -538,7 +538,7 @@ const utils = {
       }
     });
   },
-  
+
   /**
    * Function that removes and ES cluster from resources collection.
    * @param soajs
@@ -557,7 +557,7 @@ const utils = {
       }
     }, cb);
   },
-  
+
   /**
    * check if elastic search was deployed correctly and if ready to receive data
    * @param context
@@ -572,7 +572,7 @@ const utils = {
     let model = context.model;
     let tracker = context.tracker;
     let settings = context.analyticsSettings;
-    
+
     esClient.db.info((error) => {
       if (error) {
         // soajs.log.error(error);
@@ -580,11 +580,11 @@ const utils = {
         utils.printProgress(soajs, `ES cluster found but not ready, Trying again: ${tracker[envCode].counterInfo} / 15`);
         if (tracker[envCode].counterInfo >= 15) { // wait 5 min
           utils.printProgress(soajs, "Elasticsearch wasn't deployed correctly ... exiting");
-          
+
           async.parallel([
             function (miniCb) {
               settings.elasticsearch = {};
-              
+
               model.saveEntry(soajs, {
                 collection: collections.analytics,
                 record: settings
@@ -597,10 +597,10 @@ const utils = {
                 if (error) {
                   return miniCb(error);
                 }
-                
+
                 async.each(environmentRecords, (oneEnv, vCb) => {
                   delete oneEnv.dbs.databases[esDbInfo.esDbName];
-                  
+
                   if (oneEnv.dbs.clusters) {
                     delete oneEnv.dbs.clusters[esDbInfo.esClusterName];
                   }
@@ -612,7 +612,7 @@ const utils = {
                   if (error) {
                     return miniCb(error);
                   }
-                  
+
                   if (env.resources) {
                     utils.removeESClusterFromResources(soajs, esDbInfo.esClusterName, model, miniCb);
                   }
@@ -640,7 +640,7 @@ const utils = {
       }
     });
   },
-  
+
   /**
    * purge all previous indexes for filebeat and metricbeat
    * @param context
@@ -649,7 +649,7 @@ const utils = {
   "purgeElastic": function (context, cb) {
     let soajs = context.soajs;
     let esClient = context.esClient;
-    
+
     if (!context.purge) {
       //purge not reguired
       return cb(null, true);
@@ -664,7 +664,7 @@ const utils = {
       });
     });
   },
-  
+
   /**
    * Create templates for all the ES indexes
    * @param context
@@ -674,7 +674,7 @@ const utils = {
     let soajs = context.soajs;
     let esClient = context.esClient;
     let model = context.model;
-    
+
     let combo = {
       collection: collections.analytics,
       conditions: {_type: 'template'}
@@ -694,14 +694,14 @@ const utils = {
           'name': oneTemplate._name,
           'body': oneTemplate._json
         };
-        
+
         esClient.db.indices.putTemplate(options, (error) => {
           return callback(error, true);
         });
       }, cb);
     });
   },
-  
+
   /**
    * Create new indexes with their mapping
    * @param context
@@ -711,7 +711,7 @@ const utils = {
     let soajs = context.soajs;
     let esClient = context.esClient;
     let model = context.model;
-    
+
     //todo change this
     let combo = {
       collection: collections.analytics,
@@ -723,7 +723,7 @@ const utils = {
         index: '.soajs-kibana',
         body: mappings._json
       };
-      
+
       esClient.db.indices.exists({index: '.soajs-kibana'}, (error, result) => {
         if (error || !result) {
           esClient.db.indices.create(mapping, (err) => {
@@ -736,8 +736,8 @@ const utils = {
       });
     });
   },
-  
-  
+
+
   /**
    * Configure Kibana and its visualizations
    * @param context
@@ -772,7 +772,7 @@ const utils = {
                 else {
                   return callback(null, true);
                 }
-                
+
                 if (oneService.tasks.length > 0) {
                   async.forEachOf(oneService.tasks, (oneTask, key, call) => {
                     if (oneTask.status && oneTask.status.state && oneTask.status.state === "running") {
@@ -798,7 +798,7 @@ const utils = {
                           ]
                         );
                       }
-                      
+
                       let options = {
                         "$and": [
                           {
@@ -956,7 +956,7 @@ const utils = {
       }
     );
   },
-  
+
   /**
    * Function that run ElasticSearch Bulk operations
    * @param esClient
@@ -966,7 +966,7 @@ const utils = {
   "esBulk": function (esClient, array, cb) {
     esClient.bulk(array, cb);
   },
-  
+
   /**
    * create deployment object
    * @param {object} opts: installer deployment object
@@ -1015,7 +1015,7 @@ const utils = {
           network: loadContent.deployConfig.network,
           ports: loadContent.deployConfig.ports || [],
         };
-        
+
         if (loadContent.command && loadContent.command.cmd) {
           serviceParams.command = loadContent.command.cmd;
         }
@@ -1035,12 +1035,12 @@ const utils = {
             serviceParams.labels["soajs.service.mode"] = "daemonset";
           }
           logNameSpace = `-service.${env.deployer.container.kubernetes[env.deployer.selected.split('.')[2]].namespace.default}`;
-          
+
           if (env.deployer.container.kubernetes[env.deployer.selected.split('.')[2]].namespace.perService) {
             logNameSpace += `-${envCode}-logstash-service`;
           }
           // change published port name
-          
+
           if (service === 'kibana') {
             serviceParams.ports[0].published = 32601;
           }
@@ -1052,12 +1052,14 @@ const utils = {
               volumeMounts: [],
             };
             loadContent.deployConfig.volume.forEach((oneVolume) => {
-              serviceParams.voluming.volumes.push({
-                name: oneVolume.Source,
-                hostPath: {
-                  path: oneVolume.Target,
-                },
-              });
+              let volumeConfig = { name: oneVolume.Source };
+              if(serviceParams.labels && serviceParams.labels['soajs.service.name'] && serviceParams.labels['soajs.service.name'] === 'soajs-analytics-elasticsearch') {
+                volumeConfig.emptyDir = {}; //ES uses a different type of volume to prevent permissions issue
+              }
+              else {
+                volumeConfig.hostPath = { path: oneVolume.Target };
+              }
+              serviceParams.voluming.volumes.push(volumeConfig);
               serviceParams.voluming.volumeMounts.push({
                 name: oneVolume.Source,
                 mountPath: oneVolume.Target,
@@ -1124,17 +1126,17 @@ const utils = {
         return cb('invalid service name');
       }
     }
-    
+
     //do i need an else??
-    
-    
+
+
     function fillCatalogOpts(call) {
-      
+
       const combo = {};
       combo.collection = collections.catalogs;
       combo.conditions = {
         type: 'system',
-        
+
       };
       /**
        * name : name of the service (resolved to env-name, or name if allEnv is set to true)
@@ -1182,7 +1184,7 @@ const utils = {
           };
           combo.conditions.name = 'Metricbeat Recipe';
           combo.conditions.subtype = 'metricbeat';
-          
+
           break;
       }
       if (env.deployer.selected.split('.')[1] === 'kubernetes') {
@@ -1207,7 +1209,7 @@ const utils = {
       });
     }
   },
-  
+
 };
 
 module.exports = utils;

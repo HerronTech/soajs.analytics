@@ -23,7 +23,7 @@ const lib = {
     const model = opts.model;
     const analyticsSettings = opts.analyticsSettings;
     const records = [];
-    
+
     function importData(records, call) {
       const dataFolder = `${__dirname}/data/`;
       fs.readdir(dataFolder, (err, items) => {
@@ -49,7 +49,7 @@ const lib = {
         });
       });
     }
-    
+
     async.parallel({
       "import": function (callback) {
         if (analyticsSettings && analyticsSettings.mongoImported) {
@@ -122,7 +122,7 @@ const lib = {
       }
     }, cb);
   },
-  
+
   /**
    * deploy elasticsearch
    * @param {object} opts: object
@@ -152,7 +152,7 @@ const lib = {
     } else {
       deployElasticSearch(cb);
     }
-    
+
     function deployElasticSearch(call) {
       const combo = {};
       combo.collection = collection.analytics;
@@ -172,8 +172,8 @@ const lib = {
           }
           const options = utils.buildDeployerOptions(env, envCode, model);
           options.params = content;
-          
-          
+
+
           deployer.deployService(options, function (error) {
             if (error) {
               utils.printProgress(soajs, error, "error");
@@ -195,7 +195,7 @@ const lib = {
       }
     }
   },
-  
+
   /**
    * @param {string} opts:  object
    * @param {function} cb: callback function
@@ -205,7 +205,7 @@ const lib = {
     utils.pingElastic(opts, cb);
     // add version to settings record
   },
-  
+
   /**
    * @param {object} opts: object containing tasks done
    * @param {function} cb: callback function
@@ -216,7 +216,7 @@ const lib = {
     const esCluster = opts.esDbInfo.esCluster;
     utils.printProgress(soajs, 'Get Elasticsearch Client node...');
     let elasticAddress;
-    
+
     function getNode(esCluster, nodes) {
       const servers = [];
       esCluster.servers.forEach((server) => {
@@ -245,10 +245,10 @@ const lib = {
       } else if (masterNode) {
         return masterNode;
       }
-      
+
       return null;
     }
-    
+
     if (esCluster.servers.length > 1) {
       esClient.db.nodes.info({}, (err, res) => {
         if (err) {
@@ -265,7 +265,7 @@ const lib = {
       return cb(null, true);
     }
   },
-  
+
   /**
    * add mappings and templates to es
    * @param {object} opts:  object
@@ -289,8 +289,8 @@ const lib = {
       }, cb);
     });
   },
-  
-  
+
+
   /**
    * add kibana visualizations to es
    * @param {object} opts: object
@@ -311,7 +311,7 @@ const lib = {
       utils.configureKibana(opts, servicesList, cb);
     });
   },
-  
+
   /**
    * deploy kibana service
    * @param {object} opts: object
@@ -329,20 +329,20 @@ const lib = {
     combo.conditions = {
       _type: 'settings',
     };
-    
+
     if (analyticsSettings && analyticsSettings.kibana && analyticsSettings.kibana.status === 'deployed') {
       utils.printProgress(soajs, 'Kibana found...');
       return cb(null, true);
     }
     utils.printProgress(soajs, 'Deploying Kibana...');
-    
+
     utils.getAnalyticsContent(opts, 'kibana', (err, content) => {
       if (err) {
         return cb(err);
       }
       const options = utils.buildDeployerOptions(env, envCode, model);
       options.params = content;
-      
+
       async.parallel({
         deploy(call) {
           deployer.deployService(options, call);
@@ -358,9 +358,9 @@ const lib = {
         return cb(err, true)
       });
     });
-    
+
   },
-  
+
   /**
    * @param {object} opts: object
    * @param {function} cb: callback function
@@ -377,7 +377,7 @@ const lib = {
     combo.conditions = {
       _type: 'settings',
     };
-    
+
     if (analyticsSettings && analyticsSettings.logstash && analyticsSettings.logstash[envCode] && analyticsSettings.logstash[envCode].status === 'deployed') {
       utils.printProgress(soajs, 'Logstash found...');
       return cb(null, true);
@@ -405,9 +405,9 @@ const lib = {
         },
       }, cb);
     });
-    
+
   },
-  
+
   /**
    * deploy filebeat service
    * @param {object} opts: object containing tasks done
@@ -425,7 +425,7 @@ const lib = {
     combo.conditions = {
       _type: 'settings',
     };
-    
+
     if (analyticsSettings && analyticsSettings.filebeat && analyticsSettings.filebeat[envCode] && analyticsSettings.filebeat[envCode].status === 'deployed') {
       utils.printProgress(soajs, 'Filebeat found...');
       return cb(null, true);
@@ -454,7 +454,7 @@ const lib = {
       }, cb);
     });
   },
-  
+
   /**
    * deploy metricbeat service
    * @param {object} opts: object
@@ -504,7 +504,7 @@ const lib = {
       }, cb);
     });
   },
-  
+
   /**
    * check availablity of all services
    * @param {object} context: object
@@ -523,10 +523,10 @@ const lib = {
     };
     
     let flk = ['soajs-kibana', `${envCode}-logstash`, `${envCode}-filebeat`, 'soajs-metricbeat'];
-    
+
     //if kubernetes no need
     if (env.deployer.selected.indexOf("container.kubernetes") !== -1) {
-      flk = ["soajs-kibana", `${envCode}-logstash`, `${envCode}-filebeat`, 'soajs-metricbeat'];
+      flk = ["soajs-kibana", `${envCode}-logstash`, `${envCode}-filebeat`];
     }
     function generateBasicAuth(input) {
       return "Basic " + new Buffer(input.username.toString() + ":" + input.password.toString()).toString('base64');
@@ -567,10 +567,10 @@ const lib = {
         }
       });
     }
-    
+
     return check(cb);
   },
-  
+
   /**
    * add default index to kibana
    * @param {object} opts: object containing tasks done
@@ -612,7 +612,7 @@ const lib = {
         url = `http://${process.env.CONTAINER_HOST}:${externalKibana}/status`;
         return cb(null, url);
       }
-      
+
       const options = utils.buildDeployerOptions(env, envCode, model);
       deployer.listServices(options, (err, servicesList) => {
         if (err) {
@@ -631,7 +631,7 @@ const lib = {
         return cb(null, url);
       });
     }
-    
+
     // added check for availability of kibana
     function kibanaStatus(cb) {
       request(options, (error, response) => {
@@ -649,7 +649,7 @@ const lib = {
         }
       });
     }
-    
+
     function kibanaIndex(cb) {
       esClient.db.search(condition, (err, res) => {
         if (err || !res) {
@@ -670,7 +670,7 @@ const lib = {
         }
       });
     }
-    
+
     getKibanaUrl((err, url) => {
       if (err) {
         cb(err);
@@ -688,7 +688,7 @@ const lib = {
               if (err) {
                 return cb(err);
               }
-            
+
               index.id = kibanaRes.hits.hits[0]._id;
               async.parallel({
                 updateES(call) {
