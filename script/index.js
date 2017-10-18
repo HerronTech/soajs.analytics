@@ -216,6 +216,7 @@ const script = {
     const env = opts.soajs.registry;
     const envCode = opts.soajs.inputmaskData.env.toLowerCase();
     const model = opts.model;
+    const deployment = opts.deployment;
     const combo = {};
     combo.collection = collection.analytics;
     combo.conditions = {
@@ -227,6 +228,9 @@ const script = {
       }
       const options = utils.buildDeployerOptions(env, envCode, model);
       const activated = utils.getActivatedEnv(settings, envCode);
+      options.params = {
+        deployment
+      };
       deactivate.deleteService(options, envCode, activated, (error) => {
         if (error) {
           return cb(error);
