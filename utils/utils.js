@@ -98,7 +98,7 @@ const utils = {
           if (objEnv[opts.envCode].dbs && objEnv[opts.envCode].dbs.databases
             && objEnv[opts.envCode].dbs.databases[es_analytics_db]) {
             es_analytics_cluster_name = objEnv[opts.envCode].dbs.databases[es_analytics_db].cluster;
-            es_env = objEnv;
+            es_env = objEnv[opts.envCode];
           }
           else {
             for (let key in objEnv) {
@@ -116,17 +116,16 @@ const utils = {
     
     async.series({
       "checkSettings": (mCb) => {
-        if (settings && settings.elasticsearch
+        if (es_dbName) {
+          utils.printProgress(soajs, "Elasticsearch db name was provided ...");
+          es_analytics_db = es_dbName;
+          getEsDb(mCb);
+        }
+        else if (settings && settings.elasticsearch
           && settings.elasticsearch.db_name && settings.elasticsearch.db_name !== '') {
           utils.printProgress(soajs, "found existing ES settings ...");
           es_analytics_db = settings.elasticsearch.db_name;
           //get cluster from environment using db name
-          getEsDb(mCb);
-          
-        }
-        else if (es_dbName) {
-          utils.printProgress(soajs, "Elasticsearch db name was provided ...");
-          es_analytics_db = es_dbName;
           getEsDb(mCb);
         }
         //if no db name provided create one
@@ -216,7 +215,6 @@ const utils = {
               if (!es_env) {
                 return miniCb();
               }
-              
               if (es_analytics_db) {
                 delete es_env.dbs.databases[es_analytics_db];
               }

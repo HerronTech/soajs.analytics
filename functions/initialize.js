@@ -521,13 +521,16 @@ const lib = {
     options.params = {
       deployment,
     };
+    
     let flk = ['soajs-kibana', `${envCode}-logstash`, `${envCode}-filebeat`, 'soajs-metricbeat'];
     
     //if kubernetes no need
     if (env.deployer.selected.indexOf("container.kubernetes") !== -1) {
       flk = ["soajs-kibana", `${envCode}-logstash`, `${envCode}-filebeat`, 'soajs-metricbeat'];
     }
-    
+    function generateBasicAuth(input) {
+      return "Basic " + new Buffer(input.username.toString() + ":" + input.password.toString()).toString('base64');
+    }
     function check(cb) {
       utils.printProgress(soajs, 'Finalizing...');
       deployer.listServices(options, (err, servicesList) => {
@@ -587,7 +590,7 @@ const lib = {
       index: '.soajs-kibana',
       type: 'config',
       body: {
-        doc: {defaultIndex: 'metricbeat-*'},
+        doc: {defaultIndex: 'filebeat-*'},
       },
     };
     const condition = {
