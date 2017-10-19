@@ -1126,7 +1126,7 @@ const utils = {
           });
           if (esCluster.credentials && esCluster.credentials.username && esCluster.credentials.password){
             serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USERNAME=${esCluster.credentials.username}`);
-            serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USERNAME=${esCluster.credentials.password}`);
+            serviceParams.variables.push(`SOAJS_ANALYTICS_ES_PASSWORD=${esCluster.credentials.password}`);
           }
           
         }
@@ -1146,7 +1146,7 @@ const utils = {
         if (service === 'kibana') {
           if (esCluster.credentials && esCluster.credentials.username && esCluster.credentials.password){
             serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USERNAME=${esCluster.credentials.username}`);
-            serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USERNAME=${esCluster.credentials.password}`);
+            serviceParams.variables.push(`SOAJS_ANALYTICS_ES_PASSWORD=${esCluster.credentials.password}`);
           }
         }
         serviceParams = JSON.stringify(serviceParams);
