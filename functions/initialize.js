@@ -591,10 +591,7 @@ const lib = {
         doc: {defaultIndex: 'filebeat-*'},
       },
     };
-    const condition = {
-      index: '.soajs-kibana',
-      type: 'config',
-    };
+    
     const combo = {
       collection: collection.analytics,
       conditions: {_type: 'settings'},
@@ -606,7 +603,7 @@ const lib = {
     
     if (esCluster.credentials && esCluster.credentials.username && esCluster.credentials.password) {
       options.headers = {
-        "Authorization": utils.generateBasicAuth(opts.credentials)
+        "Authorization": utils.generateBasicAuth(esCluster.credentials)
       }
     }
     let kibanaPort = kibanaConfig.deployConfig.ports[0].target;
