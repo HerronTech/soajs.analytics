@@ -121,66 +121,71 @@ const script = {
             "date": new Date().getTime()
           }
         };
-        return cb(errC);
-      }
-      tracker[env].counterPing = 0;
-      tracker[env].counterInfo = 0;
-      tracker[env].counterAvailability = 0;
-      tracker[env].counterKibana = 0;
-      opts.tracker = tracker;
-      if (mode === 'dashboard') {
-        opts.esClient = new soajs.es(opts.esDbInfo.esCluster);
-      }
-      else {
         if (mode === 'installer') {
-          let cluster = JSON.parse(JSON.stringify(opts.esDbInfo.esCluster));
-          if (Object.hasOwnProperty.call(opts.analyticsSettings.elasticsearch, 'external')
-            && !opts.analyticsSettings.elasticsearch.external) {
-            cluster.servers[0].port = elasticConfig.deployConfig.ports[0].published;
-          }
-          opts.esClient = new soajs.es(cluster);
+          return cb(errC);
         }
       }
-      
-      async.eachSeries(workFlowMethods, (methodName, cb) => {
-        operations.push(async.apply(step[methodName], opts));
-        return cb();
-      }, () => {
-        async.series(operations, (err) => {
-          opts.esClient.close();
-          if (err) {
-            console.log("err: ", err)
-            tracker[env] = {
-              "info": {
-                "status": "failed",
-                "date": new Date().getTime()
+      else {
+        tracker[env].counterPing = 0;
+        tracker[env].counterInfo = 0;
+        tracker[env].counterAvailability = 0;
+        tracker[env].counterKibana = 0;
+        opts.tracker = tracker;
+        if (mode === 'dashboard') {
+          opts.esClient = new soajs.es(opts.esDbInfo.esCluster);
+        }
+        else {
+          if (mode === 'installer') {
+            let cluster = JSON.parse(JSON.stringify(opts.esDbInfo.esCluster));
+            if (Object.hasOwnProperty.call(opts.analyticsSettings.elasticsearch, 'external')
+              && !opts.analyticsSettings.elasticsearch.external) {
+              cluster.servers[0].port = elasticConfig.deployConfig.ports[0].published;
+            }
+            opts.esClient = new soajs.es(cluster);
+          }
+        }
+  
+        async.eachSeries(workFlowMethods, (methodName, cb) => {
+          operations.push(async.apply(step[methodName], opts));
+          return cb();
+        }, () => {
+          async.series(operations, (err) => {
+            opts.esClient.close();
+            if (err) {
+              console.log("err: ", err)
+              tracker[env] = {
+                "info": {
+                  "status": "failed",
+                  "date": new Date().getTime()
+                }
+              };
+              tracker = opts.tracker;
+              if (mode === 'installer') {
+                return cb(err);
               }
-            };
-            tracker = opts.tracker;
-            if (mode === 'installer') {
-              return cb(err);
             }
-          }
-          else {
-            utils.printProgress(soajs, "Analytics deployed");
-            if (mode === 'installer') {
-              return cb(null, true);
+            else {
+              utils.printProgress(soajs, "Analytics deployed");
+              if (mode === 'installer') {
+                return cb(null, true);
+              }
             }
-          }
-        
-          
-          //todo check if this is needed
-          // else {
-          //   script.deactivateAnalytics(opts.soajs, opts.env, opts.model, function (err) {
-          //     if (err) {
-          //       opts.soajs.log.error(err);
-          //     }
-          //   });
-          // }
-         
-          
+      
+      
+            //todo check if this is needed
+            // else {
+            //   script.deactivateAnalytics(opts.soajs, opts.env, opts.model, function (err) {
+            //     if (err) {
+            //       opts.soajs.log.error(err);
+            //     }
+            //   });
+            // }
+      
+      
+          });
         });
-      });
+      }
+      
       // async.auto(operations, (err, auto) => {
       //   if (err) {
       //

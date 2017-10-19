@@ -528,9 +528,6 @@ const lib = {
     if (env.deployer.selected.indexOf("container.kubernetes") !== -1) {
       flk = ["soajs-kibana", `${envCode}-logstash`, `${envCode}-filebeat`];
     }
-    function generateBasicAuth(input) {
-      return "Basic " + new Buffer(input.username.toString() + ":" + input.password.toString()).toString('base64');
-    }
     function check(cb) {
       utils.printProgress(soajs, 'Finalizing...');
       deployer.listServices(options, (err, servicesList) => {
@@ -604,12 +601,19 @@ const lib = {
     const options = {
       method: 'GET',
     };
+    const esCluster = opts.esDbInfo.esCluster;
+    
+    if (esCluster.credentials && esCluster.credentials.username && esCluster.credentials.password) {
+      options.headers = {
+        "Authorization" : utils.generateBasicAuth(opts.credentials)
+      }
+    }
     let kibanaPort = kibanaConfig.deployConfig.ports[0].target;
     let externalKibana = kibanaConfig.deployConfig.ports[0].published;
     function getKibanaUrl(cb) {
       let url;
       if (deployment && deployment.external) {
-        url = `http://${process.env.CONTAINER_HOST}:${externalKibana}/status`;
+        url = `http://${process.env.CONTAINER_HOST}:${externalKibana}/api/status`;
         return cb(null, url);
       }
 
@@ -621,10 +625,10 @@ const lib = {
         servicesList.forEach((oneService) => {
           if (oneService.labels['soajs.service.name'] === 'soajs-kibana') {
             if (env.deployer.selected.split('.')[1] === 'kubernetes') {
-              url = `http://${oneService.name}-service:${kibanaPort}/status`;
+              url = `http://${oneService.name}-service:${kibanaPort}/api/status`;
             }
             else {
-              url = `http://${oneService.name}:${kibanaPort}/status`;
+              url = `http://${oneService.name}:${kibanaPort}/api/status`;
             }
           }
         });
@@ -635,7 +639,8 @@ const lib = {
     // added check for availability of kibana
     function kibanaStatus(cb) {
       request(options, (error, response) => {
-        if (error || !response) {
+        if (error || !response
+          || !(response && response.status && response.status.overall && response.status.overall.state === "green")) {
           setTimeout(() => {
             if (counter > 150) { // wait 5 min
               cb(error);
@@ -692,7 +697,6 @@ const lib = {
               index.id = kibanaRes.hits.hits[0]._id;
               async.parallel({
                 updateES(call) {
-                  console.log(index)
                   esClient.db.update(index, call);
                 },
                 updateSettings(call) {

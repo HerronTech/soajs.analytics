@@ -76,6 +76,12 @@ const utils = {
    * @param {object} cb:
    */
   "setEsCluster": (opts, cb) => {
+    /*
+    * todo
+    * very important!!!!!!!
+    * fix problem with reload registry
+    * if es_dbName was supplied do not remove the cluster and db
+    * */
     const soajs = opts.soajs;
     let settings = opts.analyticsSettings;
     const model = opts.model;
@@ -179,6 +185,12 @@ const utils = {
           }
         }
         if (removeOptions && Object.keys(es_analytics_cluster).length > 0) {
+          
+          if (opts.es_dbName){
+            let error = new Error("es_dbName was not found!");
+            utils.printProgress(soajs, error, "error");
+            return cb(error);
+          }
           async.series({
             "removeOld": (eCb) => {
               utils.removeESClustersFromEnvRecord(soajs, removeOptions, model, eCb);
@@ -191,7 +203,7 @@ const utils = {
             }
           }, mCb);
         }
-        else if (esExists) {
+        else if (opts.es_dbName || esExists) {
           return mCb();
         }
         else {
@@ -215,6 +227,11 @@ const utils = {
               if (!es_env) {
                 return miniCb();
               }
+              if (opts.es_dbName)  {
+                let error = new Error("es_dbName was not found!");
+                utils.printProgress(soajs, error, "error");
+                return miniCb(error);
+              }
               if (es_analytics_db) {
                 delete es_env.dbs.databases[es_analytics_db];
               }
@@ -233,7 +250,7 @@ const utils = {
             if (error) {
               utils.printProgress(soajs, error, "error");
             }
-            return mCb(null, null);
+            return mCb(error, null);
           });
         }
         else {
@@ -258,10 +275,12 @@ const utils = {
       }
     }, (error) => {
       if (!process.env.SOAJS_INSTALL_DEBUG) {
-        es_analytics_cluster.extraParam.log = [{
-          type: 'stdio',
-          levels: [] // remove the logs
-        }];
+        if (es_analytics_cluster) {
+          es_analytics_cluster.extraParam.log = [{
+            type: 'stdio',
+            levels: [] // remove the logs
+          }];
+        }
       }
       opts.esDbInfo = {
         esDbName: es_analytics_db,
@@ -466,6 +485,7 @@ const utils = {
     let soajs = context.soajs;
     let env = context.soajs.registry;
     let envCode = context.envCode;
+    let es_dbName = context.es_dbName;
     let esDbInfo = context.esDbInfo;
     let model = context.model;
     let tracker = context.tracker;
@@ -495,29 +515,33 @@ const utils = {
                 if (error) {
                   return miniCb(error);
                 }
+                if (!es_dbName) {
+                  async.each(environmentRecords, (oneEnv, vCb) => {
+                    delete oneEnv.dbs.databases[esDbInfo.esDbName];
+    
+                    if (oneEnv.dbs.clusters) {
+                      delete oneEnv.dbs.clusters[esDbInfo.esClusterName];
+                    }
+                    model.saveEntry(soajs, {
+                      collection: collections.environment,
+                      record: oneEnv
+                    }, vCb);
+                  }, (error) => {
+                    if (error) {
+                      return miniCb(error);
+                    }
+                    if (env.resources) {
+                      utils.removeESClustersFromEnvRecord(soajs, esDbInfo.cluster, model, miniCb);
+                    }
+                    else {
+                      return miniCb();
+                    }
+                  });
+                }
+                else {
+                  return miniCb();
+                }
                 
-                async.each(environmentRecords, (oneEnv, vCb) => {
-                  delete oneEnv.dbs.databases[esDbInfo.db];
-                  
-                  if (oneEnv.dbs.clusters) {
-                    delete oneEnv.dbs.clusters[esDbInfo.cluster];
-                  }
-                  model.saveEntry(soajs, {
-                    collection: collections.environment,
-                    record: oneEnv
-                  }, vCb);
-                }, (error) => {
-                  if (error) {
-                    return miniCb(error);
-                  }
-                  
-                  if (env.resources) {
-                    utils.removeESClustersFromEnvRecord(soajs, esDbInfo.cluster, model, miniCb);
-                  }
-                  else {
-                    return miniCb();
-                  }
-                });
               });
             }
           ], (err) => {
@@ -568,6 +592,7 @@ const utils = {
     let env = context.soajs.registry;
     let envCode = context.envCode;
     let esDbInfo = context.esDbInfo;
+    let es_dbName = context.es_dbName;
     let esClient = context.esClient;
     let model = context.model;
     let tracker = context.tracker;
@@ -597,29 +622,34 @@ const utils = {
                 if (error) {
                   return miniCb(error);
                 }
-                
-                async.each(environmentRecords, (oneEnv, vCb) => {
-                  delete oneEnv.dbs.databases[esDbInfo.esDbName];
-                  
-                  if (oneEnv.dbs.clusters) {
-                    delete oneEnv.dbs.clusters[esDbInfo.esClusterName];
-                  }
-                  model.saveEntry(soajs, {
-                    collection: collections.environment,
-                    record: oneEnv
-                  }, vCb);
-                }, (error) => {
-                  if (error) {
-                    return miniCb(error);
-                  }
-                  
-                  if (env.resources) {
-                    utils.removeESClusterFromResources(soajs, esDbInfo.esClusterName, model, miniCb);
-                  }
-                  else {
-                    return miniCb();
-                  }
-                });
+                if (!es_dbName) {
+                  async.each(environmentRecords, (oneEnv, vCb) => {
+                    delete oneEnv.dbs.databases[esDbInfo.esDbName];
+    
+                    if (oneEnv.dbs.clusters) {
+                      delete oneEnv.dbs.clusters[esDbInfo.esClusterName];
+                    }
+                    model.saveEntry(soajs, {
+                      collection: collections.environment,
+                      record: oneEnv
+                    }, vCb);
+                  }, (error) => {
+                    if (error) {
+                      return miniCb(error);
+                    }
+    
+                    if (env.resources) {
+                      utils.removeESClusterFromResources(soajs, esDbInfo.esClusterName, model, miniCb);
+                    }
+                    else {
+                      return miniCb();
+                    }
+                  });
+                }
+                else {
+                  return miniCb();
+                }
+               
               });
             }
           ], (err) => {
@@ -1210,6 +1240,9 @@ const utils = {
     }
   },
   
+  generateBasicAuth (input) {
+    return "Basic " + new Buffer(input.username.toString() + ":" + input.password.toString()).toString('base64');
+  }
 };
 
 module.exports = utils;
