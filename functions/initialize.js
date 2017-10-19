@@ -598,13 +598,14 @@ const lib = {
     };
     const options = {
       method: 'GET',
+      headers: {
+        "Content-Type": "application/json"
+      }
     };
     const esCluster = opts.esDbInfo.esCluster;
     
     if (esCluster.credentials && esCluster.credentials.username && esCluster.credentials.password) {
-      options.headers = {
-        "Authorization": utils.generateBasicAuth(esCluster.credentials)
-      }
+      options.headers["Authorization"] = utils.generateBasicAuth(esCluster.credentials);
     }
     let kibanaPort = kibanaConfig.deployConfig.ports[0].target;
     let externalKibana = kibanaConfig.deployConfig.ports[0].published;
@@ -639,7 +640,8 @@ const lib = {
     function kibanaStatus(cb) {
       request(options, (error, response) => {
         if (error || !response
-          || !(response && response.body && response.body.status && response.body.status.overall && response.body.status.overall.state === "green")) {
+          || !(response && response.body && response.body.status
+            && response.body.status.overall && response.body.status.overall.state === "green")) {
           setTimeout(() => {
             if (counter > 150) { // wait 5 min
               cb(error);
@@ -648,13 +650,11 @@ const lib = {
             kibanaStatus(cb);
           }, 3000);
         } else {
-          counter = 0;
           return cb(error, response);
         }
       });
     }
     
-
     getKibanaUrl((err, url) => {
       if (err) {
         cb(err);

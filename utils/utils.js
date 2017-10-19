@@ -1014,6 +1014,7 @@ const utils = {
     const esCluster = opts.esDbInfo.esCluster;
     const elasticAddress = opts.elasticAddress;
     const analyticsSettings = opts.analyticsSettings;
+    let protocol =  esCluster.URLParam && esCluster.URLParam.protocol ? esCluster.URLParam.protocol : 'http';
     if (service === 'elastic' || service === 'filebeat' || (deployment && deployment.external)) {
       const path = `${__dirname}/../data/services/elk/`;
       fs.exists(path, (exists) => {
@@ -1111,14 +1112,23 @@ const utils = {
         // add support for multiple elasticsearch hosts;
         if (service === 'logstash' || service === 'metricbeat') {
           serviceParams.variables.push(
-            `${'SOAJS_ANALYTICS_ES_NB' + '='}${esCluster.servers.length}`
+            `${'SOAJS_ANALYTICS_ES_NB='}${esCluster.servers.length}`
           );
           let counter = 1;
+          serviceParams.variables.push(`SOAJS_ANALYTICS_ES_PROTOCOL=${protocol}`);
           esCluster.servers.forEach((server) => {
+            if (service  === 'logstash'){
+              server.host = protocol + "://" + server.host;
+            }
             serviceParams.variables.push(`SOAJS_ANALYTICS_ES_IP_${counter}=${server.host}`);
             serviceParams.variables.push(`SOAJS_ANALYTICS_ES_PORT_${counter}=${server.port}`);
             counter++;
           });
+          if (esCluster.credentials && esCluster.credentials.username && esCluster.credentials.password){
+            serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USERNAME=${esCluster.credentials.username}`);
+            serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USERNAME=${esCluster.credentials.password}`);
+          }
+          
         }
         if (service === 'elastic') {
           if (analyticsSettings.elasticsearch && analyticsSettings.elasticsearch.security) {
@@ -1136,7 +1146,11 @@ const utils = {
         serviceParams = JSON.stringify(serviceParams);
         // add namespace
         if (service === 'kibana') {
-          serviceParams = serviceParams.replace(/%elasticsearch_url%/g, `${esCluster.URLParam.protocol}://${elasticAddress}`);
+          serviceParams = serviceParams.replace(/%elasticsearch_url%/g, `${protocol}://${elasticAddress}`);
+          if (esCluster.credentials && esCluster.credentials.username && esCluster.credentials.password){
+            serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USERNAME=${esCluster.credentials.username}`);
+            serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USERNAME=${esCluster.credentials.password}`);
+          }
         }
         if (service === 'filebeat') {
           serviceParams = serviceParams.replace(/%logNameSpace%/g, logNameSpace);
@@ -1207,7 +1221,7 @@ const utils = {
             name: 'soajs-kibana',
             // allEnv: true,
             env: {
-              ELASTICSEARCH_URL: `${esCluster.URLParam.protocol}://${elasticAddress}`,
+              ELASTICSEARCH_URL: `${protocol}://${elasticAddress}`,
             },
           };
           soajs.inputmaskData.deployConfig = {
