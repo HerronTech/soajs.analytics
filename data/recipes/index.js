@@ -160,6 +160,10 @@ var catalogs = [
           "SOAJS_ANALYTICS_ES_PASSWORD": {
             "type": "computed",
             "value": "$SOAJS_ANALYTICS_ES_PASSWORD"
+          },
+          "SOAJS_ANALYTICS_ES_PROTOCOL": {
+            "type": "computed",
+            "value": "$SOAJS_ANALYTICS_ES_PROTOCOL"
           }
         },
         "cmd": {

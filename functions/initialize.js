@@ -23,7 +23,7 @@ const lib = {
     const model = opts.model;
     const analyticsSettings = opts.analyticsSettings;
     const records = [];
-
+    
     function importData(records, call) {
       const dataFolder = `${__dirname}/data/`;
       fs.readdir(dataFolder, (err, items) => {
@@ -49,7 +49,7 @@ const lib = {
         });
       });
     }
-
+    
     async.parallel({
       "import": function (callback) {
         if (analyticsSettings && analyticsSettings.mongoImported) {
@@ -71,29 +71,29 @@ const lib = {
         const recipeCondition = {
           "collection": collection.catalogs,
           "conditions": {
-          "$and" : [
-            {
-              "$or": [
-                {
-                  "name": "Kibana Recipe",
-                  "subtype": "kibana",
-                },
-                {
-                  "name": "Logstash Recipe",
-                  "subtype": "logstash"
-                },
-                {
-                  "name": "Metricbeat Recipe",
-                  "subtype": "metricbeat"
-                }
-              ]
-            },
-            {
-              "type": "system",
-              "locked": true
-            }
-          ]
-        },
+            "$and": [
+              {
+                "$or": [
+                  {
+                    "name": "Kibana Recipe",
+                    "subtype": "kibana",
+                  },
+                  {
+                    "name": "Logstash Recipe",
+                    "subtype": "logstash"
+                  },
+                  {
+                    "name": "Metricbeat Recipe",
+                    "subtype": "metricbeat"
+                  }
+                ]
+              },
+              {
+                "type": "system",
+                "locked": true
+              }
+            ]
+          },
           "fields": {
             "name": 1
           }
@@ -103,12 +103,12 @@ const lib = {
             return callback(err);
           }
           const recipesNames = ["Kibana Recipe", "Logstash Recipe", "Metricbeat Recipe"];
-          if (result.length !== 3){
+          if (result.length !== 3) {
             let resultNames = [];
             let final = recipesNames;
-            if (result.length > 0){
+            if (result.length > 0) {
               resultNames = result.map(x => (x.name ? x.name : null));
-              final = _.difference (recipesNames, resultNames);
+              final = _.difference(recipesNames, resultNames);
             }
             recipeCondition.record = recipes.filter(oneRecipe => {
               return (final.indexOf(oneRecipe.name) !== -1);
@@ -122,7 +122,7 @@ const lib = {
       }
     }, cb);
   },
-
+  
   /**
    * deploy elasticsearch
    * @param {object} opts: object
@@ -152,7 +152,7 @@ const lib = {
     } else {
       deployElasticSearch(cb);
     }
-
+    
     function deployElasticSearch(call) {
       const combo = {};
       combo.collection = collection.analytics;
@@ -172,8 +172,8 @@ const lib = {
           }
           const options = utils.buildDeployerOptions(env, envCode, model);
           options.params = content;
-
-
+          
+          
           deployer.deployService(options, function (error) {
             if (error) {
               utils.printProgress(soajs, error, "error");
@@ -195,7 +195,7 @@ const lib = {
       }
     }
   },
-
+  
   /**
    * @param {string} opts:  object
    * @param {function} cb: callback function
@@ -205,7 +205,7 @@ const lib = {
     utils.pingElastic(opts, cb);
     // add version to settings record
   },
-
+  
   /**
    * @param {object} opts: object containing tasks done
    * @param {function} cb: callback function
@@ -216,7 +216,7 @@ const lib = {
     const esCluster = opts.esDbInfo.esCluster;
     utils.printProgress(soajs, 'Get Elasticsearch Client node...');
     let elasticAddress;
-
+    
     function getNode(esCluster, nodes) {
       const servers = [];
       esCluster.servers.forEach((server) => {
@@ -245,10 +245,10 @@ const lib = {
       } else if (masterNode) {
         return masterNode;
       }
-
+      
       return null;
     }
-
+    
     if (esCluster.servers.length > 1) {
       esClient.db.nodes.info({}, (err, res) => {
         if (err) {
@@ -265,7 +265,7 @@ const lib = {
       return cb(null, true);
     }
   },
-
+  
   /**
    * add mappings and templates to es
    * @param {object} opts:  object
@@ -289,8 +289,8 @@ const lib = {
       }, cb);
     });
   },
-
-
+  
+  
   /**
    * add kibana visualizations to es
    * @param {object} opts: object
@@ -311,7 +311,7 @@ const lib = {
       utils.configureKibana(opts, servicesList, cb);
     });
   },
-
+  
   /**
    * deploy kibana service
    * @param {object} opts: object
@@ -329,20 +329,20 @@ const lib = {
     combo.conditions = {
       _type: 'settings',
     };
-
+    
     if (analyticsSettings && analyticsSettings.kibana && analyticsSettings.kibana.status === 'deployed') {
       utils.printProgress(soajs, 'Kibana found...');
       return cb(null, true);
     }
     utils.printProgress(soajs, 'Deploying Kibana...');
-
+    
     utils.getAnalyticsContent(opts, 'kibana', (err, content) => {
       if (err) {
         return cb(err);
       }
       const options = utils.buildDeployerOptions(env, envCode, model);
       options.params = content;
-
+      
       async.parallel({
         deploy(call) {
           deployer.deployService(options, call);
@@ -358,9 +358,9 @@ const lib = {
         return cb(err, true)
       });
     });
-
+    
   },
-
+  
   /**
    * @param {object} opts: object
    * @param {function} cb: callback function
@@ -377,7 +377,7 @@ const lib = {
     combo.conditions = {
       _type: 'settings',
     };
-
+    
     if (analyticsSettings && analyticsSettings.logstash && analyticsSettings.logstash[envCode] && analyticsSettings.logstash[envCode].status === 'deployed') {
       utils.printProgress(soajs, 'Logstash found...');
       return cb(null, true);
@@ -405,9 +405,9 @@ const lib = {
         },
       }, cb);
     });
-
+    
   },
-
+  
   /**
    * deploy filebeat service
    * @param {object} opts: object containing tasks done
@@ -425,7 +425,7 @@ const lib = {
     combo.conditions = {
       _type: 'settings',
     };
-
+    
     if (analyticsSettings && analyticsSettings.filebeat && analyticsSettings.filebeat[envCode] && analyticsSettings.filebeat[envCode].status === 'deployed') {
       utils.printProgress(soajs, 'Filebeat found...');
       return cb(null, true);
@@ -454,7 +454,7 @@ const lib = {
       }, cb);
     });
   },
-
+  
   /**
    * deploy metricbeat service
    * @param {object} opts: object
@@ -504,7 +504,7 @@ const lib = {
       }, cb);
     });
   },
-
+  
   /**
    * check availablity of all services
    * @param {object} context: object
@@ -523,11 +523,12 @@ const lib = {
     };
     
     let flk = ['soajs-kibana', `${envCode}-logstash`, `${envCode}-filebeat`, 'soajs-metricbeat'];
-
+    
     //if kubernetes no need
     if (env.deployer.selected.indexOf("container.kubernetes") !== -1) {
       flk = ["soajs-kibana", `${envCode}-logstash`, `${envCode}-filebeat`];
     }
+    
     function check(cb) {
       utils.printProgress(soajs, 'Finalizing...');
       deployer.listServices(options, (err, servicesList) => {
@@ -564,10 +565,10 @@ const lib = {
         }
       });
     }
-
+    
     return check(cb);
   },
-
+  
   /**
    * add default index to kibana
    * @param {object} opts: object containing tasks done
@@ -605,18 +606,19 @@ const lib = {
     
     if (esCluster.credentials && esCluster.credentials.username && esCluster.credentials.password) {
       options.headers = {
-        "Authorization" : utils.generateBasicAuth(opts.credentials)
+        "Authorization": utils.generateBasicAuth(opts.credentials)
       }
     }
     let kibanaPort = kibanaConfig.deployConfig.ports[0].target;
     let externalKibana = kibanaConfig.deployConfig.ports[0].published;
+    
     function getKibanaUrl(cb) {
       let url;
       if (deployment && deployment.external) {
         url = `http://${process.env.CONTAINER_HOST}:${externalKibana}/api/status`;
         return cb(null, url);
       }
-
+      
       const options = utils.buildDeployerOptions(env, envCode, model);
       deployer.listServices(options, (err, servicesList) => {
         if (err) {
@@ -635,12 +637,12 @@ const lib = {
         return cb(null, url);
       });
     }
-
+    
     // added check for availability of kibana
     function kibanaStatus(cb) {
       request(options, (error, response) => {
         if (error || !response
-          || !(response && response.status && response.status.overall && response.status.overall.state === "green")) {
+          || !(response && response.body && response.body.status && response.body.status.overall && response.body.status.overall.state === "green")) {
           setTimeout(() => {
             if (counter > 150) { // wait 5 min
               cb(error);
@@ -650,51 +652,27 @@ const lib = {
           }, 3000);
         } else {
           counter = 0;
-          return cb(error, true);
+          return cb(error, response);
         }
       });
     }
-
-    function kibanaIndex(cb) {
-      esClient.db.search(condition, (err, res) => {
-        if (err || !res) {
-          setTimeout(() => {
-            if (counter > 150) { // wait 5 min
-              cb(err);
-            }
-            counter++;
-            kibanaIndex(cb);
-          }, 500);
-          return cb(err);
-        }
-        else if (res && res.hits && res.hits.hits && res.hits.hits.length > 0) {
-          return cb(null, res);
-        }
-        else {
-          return cb("kibana index empty!");
-        }
-      });
-    }
+    
 
     getKibanaUrl((err, url) => {
       if (err) {
         cb(err);
       } else {
         options.url = url;
-        kibanaStatus((err) => {
+        kibanaStatus((err, kibanaRes) => {
           if (err) {
             return cb(err);
           }
-          kibanaIndex((error, kibanaRes) => {
-            if (error) {
-              return cb(error);
-            }
             model.findEntry(soajs, combo, (err, result) => {
               if (err) {
                 return cb(err);
               }
 
-              index.id = kibanaRes.hits.hits[0]._id;
+              index.id = kibanaRes.body.version;
               async.parallel({
                 updateES(call) {
                   esClient.db.update(index, call);
@@ -722,7 +700,6 @@ const lib = {
                 },
               }, cb);
             });
-          });
         });
       }
     });
