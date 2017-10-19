@@ -598,7 +598,10 @@ const lib = {
     };
     const options = {
       method: 'GET',
-      json: true
+      json: true,
+      headers: {
+        "Content-Type": "application/json"
+      }
     };
     const esCluster = opts.esDbInfo.esCluster;
     
