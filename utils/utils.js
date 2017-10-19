@@ -1143,14 +1143,16 @@ const utils = {
             }
           }
         }
-        serviceParams = JSON.stringify(serviceParams);
-        // add namespace
         if (service === 'kibana') {
-          serviceParams = serviceParams.replace(/%elasticsearch_url%/g, `${protocol}://${elasticAddress}`);
           if (esCluster.credentials && esCluster.credentials.username && esCluster.credentials.password){
             serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USERNAME=${esCluster.credentials.username}`);
             serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USERNAME=${esCluster.credentials.password}`);
           }
+        }
+        serviceParams = JSON.stringify(serviceParams);
+        // add namespace
+        if (service === 'kibana') {
+          serviceParams = serviceParams.replace(/%elasticsearch_url%/g, `${protocol}://${elasticAddress}`);
         }
         if (service === 'filebeat') {
           serviceParams = serviceParams.replace(/%logNameSpace%/g, logNameSpace);
