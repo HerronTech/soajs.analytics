@@ -816,6 +816,19 @@ const utils = {
                               index: {
                                 _index: '.soajs-kibana',
                                 _type: 'index-pattern',
+                                _id: 'filebeat-*'
+                              }
+                            },
+                            {
+                              title: 'filebeat-*',
+                              timeFieldName: '@timestamp',
+                              fields: filebeatIndex.fields,
+                              fieldFormatMap: filebeatIndex.fieldFormatMap
+                            },
+                            {
+                              index: {
+                                _index: '.kibana',
+                                _type: 'index-pattern',
                                 _id: `filebeat-${serviceName}-${serviceEnv}-` + '*',
                               },
                             },

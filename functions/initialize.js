@@ -6,6 +6,7 @@ const fs = require('fs');
 // const deployer = require('soajs').drivers;
 const deployer = require('soajs.core.drivers');
 const utils = require('../utils/utils');
+const es = require('../utils/es');
 const kibanaConfig = require('../data/services/elk/kibana.js');
 const recipes = require('../data/recipes/index');
 const collection = {
@@ -584,13 +585,7 @@ const lib = {
     //this is not done yet
     utils.printProgress(soajs, 'Waiting for kibana...');
     let counter = 0;
-    const index = {
-      index: '.soajs-kibana',
-      type: 'config',
-      body: {
-        doc: {defaultIndex: 'filebeat-*'},
-      },
-    };
+    let index;
     
     const combo = {
       collection: collection.analytics,
@@ -614,7 +609,7 @@ const lib = {
     function getKibanaUrl(cb) {
       let url;
       if (deployment && deployment.external) {
-        url = `http://${process.env.CONTAINER_HOST}:${externalKibana}/api/status`;
+        url = `http://${process.env.CONTAINER_HOST}:${externalKibana}`;
         return cb(null, url);
       }
       
@@ -626,10 +621,10 @@ const lib = {
         servicesList.forEach((oneService) => {
           if (oneService.labels['soajs.service.name'] === 'soajs-kibana') {
             if (env.deployer.selected.split('.')[1] === 'kubernetes') {
-              url = `http://${oneService.name}-service:${kibanaPort}/api/status`;
+              url = `http://${oneService.name}-service:${kibanaPort}`;
             }
             else {
-              url = `http://${oneService.name}:${kibanaPort}/api/status`;
+              url = `http://${oneService.name}:${kibanaPort}`;
             }
           }
         });
@@ -660,44 +655,56 @@ const lib = {
       if (err) {
         cb(err);
       } else {
-        options.url = url;
+        options.url = url + "/api/status";
         kibanaStatus((err, kibanaRes) => {
           if (err) {
             return cb(err);
           }
-            model.findEntry(soajs, combo, (err, result) => {
-              if (err) {
-                return cb(err);
+          model.findEntry(soajs, combo, (err, result) => {
+            if (err) {
+              return cb(err);
+            }
+            index = [
+              {
+                "update": {
+                  "_index": ".soajs-kibana",
+                  "_type": "config",
+                  "_id": kibanaRes.body.version.toString(),
+                }
+              },
+              {
+                "doc": {
+                  "defaultIndex": `filebeat-*`
+                }
               }
-
-              index.id = kibanaRes.body.version;
-              async.parallel({
-                updateES(call) {
-                  esClient.db.update(index, call);
-                },
-                updateSettings(call) {
-                  const criteria = {
-                    $set: {
-                      kibana: {
-                        version: index.id,
-                        status: 'deployed',
-                        port: `${externalKibana}`,
-                      },
+            ];
+            async.parallel({
+              updateES(call) {
+                es.esBulk(esClient, index, call);
+              },
+              updateSettings(call) {
+                const criteria = {
+                  $set: {
+                    kibana: {
+                      version: index.id,
+                      status: 'deployed',
+                      port: `${externalKibana}`,
                     },
-                  };
-                  result.env[envCode] = true;
-                  criteria.$set.env = result.env;
-                  const options = {
-                    safe: true,
-                    multi: false,
-                    upsert: false,
-                  };
-                  combo.fields = criteria;
-                  combo.options = options;
-                  model.updateEntry(soajs, combo, call);
-                },
-              }, cb);
-            });
+                  },
+                };
+                result.env[envCode] = true;
+                criteria.$set.env = result.env;
+                const options = {
+                  safe: true,
+                  multi: false,
+                  upsert: false,
+                };
+                combo.fields = criteria;
+                combo.options = options;
+                model.updateEntry(soajs, combo, call);
+              },
+            }, cb);
+          });
         });
       }
     });

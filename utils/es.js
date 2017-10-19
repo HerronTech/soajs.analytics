@@ -5,11 +5,11 @@ const elastic = {
   /**
    * do es bulk operations
    * @param {object} esClient:elasticsearch connector object
-   * @param {object} array: array of data
+   * @param {object} arrayData: array of data
    * @param {function} cb: callback function
    */
-  esBulk(esClient, array, cb) {
-    esClient.bulk(array, cb);
+  esBulk(esClient, arrayData, cb) {
+    esClient.bulk(arrayData, cb);
   },
   
 };
