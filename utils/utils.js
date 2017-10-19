@@ -1013,6 +1013,7 @@ const utils = {
     const envCode = opts.envCode;
     const esCluster = opts.esDbInfo.esCluster;
     const elasticAddress = opts.elasticAddress;
+    const analyticsSettings = opts.analyticsSettings;
     if (service === 'elastic' || service === 'filebeat' || (deployment && deployment.external)) {
       const path = `${__dirname}/../data/services/elk/`;
       fs.exists(path, (exists) => {
@@ -1118,6 +1119,19 @@ const utils = {
             serviceParams.variables.push(`SOAJS_ANALYTICS_ES_PORT_${counter}=${server.port}`);
             counter++;
           });
+        }
+        if (service === 'elastic') {
+          if (analyticsSettings.elasticsearch && analyticsSettings.elasticsearch.security) {
+            if (analyticsSettings.elasticsearch.security.rw) {
+              serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USER_RW=${analyticsSettings.elasticsearch.security.rw}`);
+            }
+            if (analyticsSettings.elasticsearch.security.ro) {
+              serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USER_RO=${analyticsSettings.elasticsearch.security.ro}`);
+            }
+            if (analyticsSettings.elasticsearch.security.owner) {
+              serviceParams.variables.push(`SOAJS_ANALYTICS_ES_USER_OWNER=${analyticsSettings.elasticsearch.security.owner}`);
+            }
+          }
         }
         serviceParams = JSON.stringify(serviceParams);
         // add namespace
