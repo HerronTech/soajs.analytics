@@ -137,7 +137,6 @@ const lib = {
     const env = opts.soajs.registry;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
-    utils.printProgress(soajs, 'Deploying Elasticsearch...');
     if (mode === 'dashboard') {
       utils.checkElasticsearch(opts, (err, deployed) => {
         if (err) {
@@ -164,9 +163,13 @@ const lib = {
         && analyticsSettings.elasticsearch.status === "deployed") {
         //purge data since elasticsearch is not deployed
         utils.printProgress(soajs, "Elasticsearch is already deployed...");
-        return cb(null, true)
+        return cb(null, true);
+      }if(opts.esDbInfo && opts.esDbInfo.esCluster &&  opts.esDbInfo.esCluster.es_Ext){
+        utils.printProgress(soajs, "Elasticsearch is External");
+        return cb(null, true);
       }
       else {
+        utils.printProgress(soajs, 'Deploying Elasticsearch...');
         utils.getAnalyticsContent(opts, 'elastic', (err, content) => {
           if (err) {
             return call(err);
@@ -178,7 +181,12 @@ const lib = {
           deployer.deployService(options, function (error) {
             if (error) {
               utils.printProgress(soajs, error, "error");
-              analyticsSettings.elasticsearch = {};
+              let anSettings = {};
+              if(analyticsSettings.elasticsearch && analyticsSettings.elasticsearch.security &&
+                Object.keys(analyticsSettings.elasticsearch.security).length > 0){
+                anSettings.security = analyticsSettings.elasticsearch.security;
+              }
+              analyticsSettings.elasticsearch = anSettings;
             }
             else {
               config.purge = true;
