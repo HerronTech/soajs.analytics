@@ -827,7 +827,7 @@ const utils = {
                             },
                             {
                               index: {
-                                _index: '.kibana',
+                                _index: '.soajs-kibana',
                                 _type: 'index-pattern',
                                 _id: `filebeat-${serviceName}-${serviceEnv}-` + '*',
                               },
