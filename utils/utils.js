@@ -127,7 +127,7 @@ const utils = {
           es_analytics_db = es_dbName;
           getEsDb(mCb);
         }
-        else if (settings && settings.elasticsearch
+        else if (settings && settings.elasticsearch && !settings.elasticsearch.external
           && settings.elasticsearch.db_name && settings.elasticsearch.db_name !== '') {
           utils.printProgress(soajs, "found existing ES settings ...");
           es_analytics_db = settings.elasticsearch.db_name;
