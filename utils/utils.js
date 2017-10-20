@@ -125,6 +125,12 @@ const utils = {
         if (es_dbName) {
           utils.printProgress(soajs, "Elasticsearch db name was provided ...");
           es_analytics_db = es_dbName;
+          if (settings) {
+            if (!settings.elasticsearch) {
+              settings.elasticsearch = {};
+            }
+            settings.elasticsearch.external = true;
+          }
           getEsDb(mCb);
         }
         else if (settings && settings.elasticsearch && !settings.elasticsearch.external
@@ -139,6 +145,12 @@ const utils = {
           utils.printProgress(soajs, "Generating new ES db and cluster information...");
           es_analytics_db = "es_analytics_db_" + uid;
           es_analytics_cluster_name = "es_analytics_cluster_" + uid;
+          if (settings) {
+            if (!settings.elasticsearch) {
+              settings.elasticsearch = {};
+            }
+            settings.elasticsearch.external = false;
+          }
           utils.createNewESDB(soajs, {
             dbName: es_analytics_db,
             clusterName: es_analytics_cluster_name
@@ -172,9 +184,6 @@ const utils = {
         else {
           utils.printProgress(soajs, "no cluster found, generating new configuration...");
           es_analytics_cluster = config.elasticsearch.cluster;
-          if (opts.credentials && opts.credentials.username && opts.credentials.password) {
-            es_analytics_cluster.credentials = opts.credentials;
-          }
           if (soajsRegistry.deployer.selected.split('.')[1] === "kubernetes") {
             //added support for namespace and perService
             let namespace = soajsRegistry.deployer.container["kubernetes"][soajsRegistry.deployer.selected.split('.')[2]].namespace.default;
@@ -183,6 +192,10 @@ const utils = {
             }
             es_analytics_cluster.servers[0].host += '-service.' + namespace;
           }
+        }
+        if (opts.credentials && opts.credentials.username && opts.credentials.password) {
+          esExists = false;
+          es_analytics_cluster.credentials = opts.credentials;
         }
         if (removeOptions && Object.keys(es_analytics_cluster).length > 0) {
           
