@@ -472,6 +472,7 @@ const lib = {
   deployMetricbeat(opts, cb) {
     const soajs = opts.soajs;
     const envCode = opts.envCode;
+    //todo check this env
     const env = opts.soajs.registry;
     const analyticsSettings = opts.analyticsSettings;
     const model = opts.model;
